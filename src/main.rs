@@ -1,7 +1,7 @@
 mod aoc2023;
 
 use clap::Parser;
-use lib::{challenge::ChallengeObject, executor::AocExecutor};
+use lib::{challenge::ChallengeObject, executor::AocExecutor, inputs::AocInputs};
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -13,9 +13,15 @@ struct Args {
 
     #[arg(short, long)]
     day: Option<usize>,
+
+    #[arg(long)]
+    download: Option<String>,
+
+    #[arg(long)]
+    inputs_cache: Option<String>,
 }
 
-fn main() {
+fn main() -> std::io::Result<()> {
     let args = Args::parse();
 
     let mut challenges: Vec<ChallengeObject> = aoc2023::challanges().into_iter().collect();
@@ -29,6 +35,9 @@ fn main() {
     }
 
     challenges.sort_by_key(|c| c.year * 10 + c.day);
+
+    AocInputs::new(args.inputs_cache.unwrap_or("cache".into()), args.download)?
+        .get_inputs(&mut challenges)?;
 
     println!("Running {} challenges...", challenges.len());
 
@@ -44,4 +53,6 @@ fn main() {
     for result in results {
         println!("[{} day {}] {:?}", result.year, result.day, result.solution);
     }
+
+    Ok(())
 }

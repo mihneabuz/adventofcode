@@ -7,21 +7,21 @@ use lib::{aoc, workers};
 pub struct Test;
 
 impl Challenge for Test {
-    aoc!(year = 2023, day = 1);
+    aoc!(year = 2022, day = 1);
 
-    fn solve(_: String) -> (String, String) {
+    fn solve(input: String) -> (String, String) {
         std::thread::sleep(std::time::Duration::from_secs(1));
-        ("hello".into(), "world".into())
+        (input, "world".into())
     }
 }
 
 pub struct ThreadedTest;
 
 impl ThreadedChallenge for ThreadedTest {
-    aoc!(year = 2023, day = 2);
+    aoc!(year = 2022, day = 2);
 
     workers!(4);
-    fn solve(_: String, workers: &mut WorkerGroup) -> (String, String) {
+    fn solve(input: String, workers: &mut WorkerGroup) -> (String, String) {
         let nums = (0..10000).collect::<Arc<_>>();
 
         let mut handles = Vec::new();
@@ -40,6 +40,6 @@ impl ThreadedChallenge for ThreadedTest {
 
         let total = handles.into_iter().map(|h| h.join()).sum::<usize>();
 
-        ("nums".into(), total.to_string())
+        (input, total.to_string())
     }
 }
