@@ -68,7 +68,7 @@ impl AocInputs {
 
         if let Some(downloader) = self.downloader.as_mut() {
             println!(
-                "downloading input for {} day {}...",
+                "Downloading input for {} day {}...",
                 challenge.year, challenge.day
             );
 

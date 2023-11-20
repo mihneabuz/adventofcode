@@ -1,4 +1,33 @@
-use std::fs;
+use lib::aoc;
+use lib::challenge::Challenge;
+
+pub struct Day7;
+
+impl Challenge for Day7 {
+    aoc!(year = 2022, day = 7);
+
+    fn solve(input: String) -> (String, String) {
+        let mut root = Entry::Dir(vec![], 0);
+        let mut pwd = Vec::new();
+
+        for cmd in input.split("$ ").skip(2) {
+            build_fs(&mut root, &mut pwd, cmd);
+        }
+        calculate_sizes(&mut root);
+
+        let fst = sum_directories::<100000>(&root);
+
+        let to_free = if let Entry::Dir(_, tot) = root {
+            tot - 40000000
+        } else {
+            unreachable!()
+        };
+
+        let snd = smallest_dir(&root, to_free).unwrap();
+
+        (fst.to_string(), snd.to_string())
+    }
+}
 
 enum Entry {
     Dir(Vec<(String, Entry)>, u64),
@@ -10,28 +39,6 @@ fn parse_entry(s: &str) -> (String, Entry) {
     match a {
         "dir" => (b.to_string(), Entry::Dir(Vec::new(), 0)),
         size @ _ => (b.to_string(), Entry::File(size.parse().unwrap())),
-    }
-}
-
-fn print_tree(e: &Entry) {
-    match e {
-        Entry::Dir(v, s) => {
-            println!("- / (dir, size={})", s);
-            v.iter().for_each(|e| print_indent(e, 1));
-        }
-        _ => unreachable!(),
-    }
-}
-
-fn print_indent(e: &(String, Entry), indent: usize) {
-    match e {
-        (a, Entry::Dir(v, size)) => {
-            println!("{}- {} (dir, size={})", " ".repeat(indent * 2), a, size);
-            v.iter().for_each(|e| print_indent(e, indent + 1));
-        }
-        (a, Entry::File(size)) => {
-            println!("{}- {} (file, size={})", " ".repeat(indent * 2), a, size);
-        }
     }
 }
 
@@ -70,8 +77,12 @@ fn smallest_dir(e: &Entry, target: u64) -> Option<u64> {
 fn build_fs(mut root: &mut Entry, pwd: &mut Vec<String>, cmd: &str) {
     if cmd.starts_with("cd") {
         match cmd[3..].trim() {
-            ".." => { pwd.pop(); }
-            e @ _ => { pwd.push(String::from(e)); }
+            ".." => {
+                pwd.pop();
+            }
+            e @ _ => {
+                pwd.push(String::from(e));
+            }
         }
     } else if cmd.starts_with("ls") {
         for dir in pwd {
@@ -82,34 +93,16 @@ fn build_fs(mut root: &mut Entry, pwd: &mut Vec<String>, cmd: &str) {
         }
 
         if let Entry::Dir(v, _) = root {
-            v.extend(cmd.split_once("\n").unwrap().1.trim().split("\n").map(parse_entry));
+            v.extend(
+                cmd.split_once("\n")
+                    .unwrap()
+                    .1
+                    .trim()
+                    .split("\n")
+                    .map(parse_entry),
+            );
         }
     } else {
         unreachable!()
     }
-}
-
-fn main() {
-    let content = fs::read_to_string("input").unwrap();
-
-    let mut root = Entry::Dir(vec![], 0);
-    let mut pwd = Vec::new();
-
-    for cmd in content.split("$ ").skip(2) {
-        build_fs(&mut root, &mut pwd, cmd);
-    }
-    calculate_sizes(&mut root);
-
-    print_tree(&root);
-    println!();
-
-    println!("1: {}", sum_directories::<100000>(&root));
-
-    let to_free = if let Entry::Dir(_, tot) = root {
-        tot - 40000000
-    } else {
-        unreachable!()
-    };
-
-    println!("2: {}", smallest_dir(&root, to_free).unwrap());
 }

@@ -1,5 +1,23 @@
-use std::fs;
-use std::io::{self, BufRead};
+use lib::aoc;
+use lib::challenge::Challenge;
+
+pub struct Day2;
+
+impl Challenge for Day2 {
+    aoc!(year = 2022, day = 2);
+
+    fn solve(input: String) -> (String, String) {
+        let (res1, res2) = input.lines().fold((0, 0), |acc, line| {
+            let (p1, p2) = line.split_once(" ").unwrap();
+            (
+                acc.0 + score(p1, choice1(p2)),
+                acc.1 + score(p1, choice2(p1, p2)),
+            )
+        });
+
+        (res1.to_string(), res2.to_string())
+    }
+}
 
 fn score(p1: &str, p2: &str) -> i32 {
     let piece = match p2 {
@@ -44,21 +62,4 @@ fn choice2<'a>(p1: &'a str, p2: &'a str) -> &'a str {
 
         _ => unreachable!(),
     }
-}
-
-fn main() {
-    let reader = io::BufReader::new(fs::File::open("./input").unwrap());
-    let (res1, res2) = reader
-        .lines()
-        .map(|l| l.unwrap())
-        .fold((0, 0), |acc, line| {
-            let (p1, p2) = line.split_once(" ").unwrap();
-            (
-                acc.0 + score(p1, choice1(p2)),
-                acc.1 + score(p1, choice2(p1, p2)),
-            )
-        });
-
-    println!("1: {}", res1);
-    println!("2: {}", res2);
 }

@@ -1,6 +1,28 @@
+use lib::aoc;
+use lib::challenge::Challenge;
+
 use std::collections::HashSet;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
+
+pub struct Day3;
+
+impl Challenge for Day3 {
+    aoc!(year = 2022, day = 3);
+
+    fn solve(input: String) -> (String, String) {
+        let rucks = input.lines().collect::<Vec<&str>>();
+
+        let res1 = rucks
+            .iter()
+            .fold(0, |acc, line| acc + priority(error(line)));
+
+        let res2 = rucks
+            .chunks(3)
+            .into_iter()
+            .fold(0, |acc, lines| acc + priority(common(lines)));
+
+        (res1.to_string(), res2.to_string())
+    }
+}
 
 fn error(s: &str) -> u8 {
     let (fst, snd) = s.split_at(s.len() / 2);
@@ -19,7 +41,7 @@ fn error(s: &str) -> u8 {
     unreachable!()
 }
 
-fn common(ss: &[String]) -> u8 {
+fn common(ss: &[&str]) -> u8 {
     let c = ss
         .into_iter()
         .map(|s| s.bytes().collect::<HashSet<u8>>())
@@ -35,20 +57,4 @@ fn priority(b: u8) -> i32 {
         'A'..='Z' => (b - 'A' as u8) as i32 + 27,
         _ => unreachable!(),
     }
-}
-
-fn main() {
-    let reader = BufReader::new(File::open("./input").unwrap());
-    let rucks = reader.lines().map(|l| l.unwrap()).collect::<Vec<String>>();
-
-    let res1 = rucks
-        .iter()
-        .fold(0, |acc, line| acc + priority(error(line)));
-    println!("1: {}", res1);
-
-    let res2 = rucks
-        .chunks(3)
-        .into_iter()
-        .fold(0, |acc, lines| acc + priority(common(lines)));
-    println!("2: {}", res2);
 }

@@ -1,5 +1,52 @@
+use lib::aoc;
+use lib::challenge::Challenge;
+
 use std::cmp;
-use std::fs;
+
+pub struct Day8;
+
+impl Challenge for Day8 {
+    aoc!(year = 2022, day = 8);
+
+    fn solve(input: String) -> (String, String) {
+        let mut map = input
+            .split("\n")
+            .map(|s| s.bytes().map(|b| b - '0' as u8).collect::<Vec<_>>())
+            .collect::<Vec<_>>();
+
+        map.pop();
+
+        let n = map.len();
+
+        let mut visible = vec![vec![false; n]; n];
+        for i in 0..n {
+            compute_visibility_horizontal(&map, i, &mut visible);
+            compute_visibility_vertical(&map, i, &mut visible);
+        }
+
+        let count = visible
+            .into_iter()
+            .map(|v| v.into_iter().filter(|b| *b).count())
+            .sum::<usize>();
+
+        let mut best_score = 0;
+        for i in 1..n - 1 {
+            for j in 1..n - 1 {
+                let mut score = 1;
+
+                score *= compute_score((0..i + 1).rev().map(|k| map[k][j]));
+                score *= compute_score((i..n).map(|k| map[k][j]));
+
+                score *= compute_score((0..j + 1).rev().map(|k| map[i][k]));
+                score *= compute_score((j..n).map(|k| map[i][k]));
+
+                best_score = cmp::max(best_score, score);
+            }
+        }
+
+        (count.to_string(), best_score.to_string())
+    }
+}
 
 fn compute_visibility_horizontal(map: &[Vec<u8>], i: usize, visible: &mut [Vec<bool>]) {
     let (mut lo, mut hi) = (0, map.len() - 1);
@@ -62,45 +109,4 @@ fn compute_score(mut iter: impl Iterator<Item = u8>) -> i32 {
     }
 
     score
-}
-
-fn main() {
-    let mut map = fs::read_to_string("input")
-        .unwrap()
-        .split("\n")
-        .map(|s| s.bytes().map(|b| b - '0' as u8).collect::<Vec<_>>())
-        .collect::<Vec<_>>();
-    map.pop();
-
-    let n = map.len();
-
-    let mut visible = vec![vec![false; n]; n];
-    for i in 0..n {
-        compute_visibility_horizontal(&map, i, &mut visible);
-        compute_visibility_vertical(&map, i, &mut visible);
-    }
-
-    let count = visible
-        .into_iter()
-        .map(|v| v.into_iter().filter(|b| *b).count())
-        .sum::<usize>();
-
-    println!("1: {}", count);
-
-    let mut best_score = 0;
-    for i in 1..n - 1 {
-        for j in 1..n - 1 {
-            let mut score = 1;
-
-            score *= compute_score((0..i + 1).rev().map(|k| map[k][j]));
-            score *= compute_score((i..n).map(|k| map[k][j]));
-
-            score *= compute_score((0..j + 1).rev().map(|k| map[i][k]));
-            score *= compute_score((j..n).map(|k| map[i][k]));
-
-            best_score = cmp::max(best_score, score);
-        }
-    }
-
-    println!("2: {}", best_score);
 }

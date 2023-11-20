@@ -31,6 +31,13 @@ impl AocExecutor {
         }
     }
 
+    pub fn run_one(&mut self, challenge: ChallengeObject) -> ChallengeResult {
+        let count = (challenge.worker_hint.unwrap_or(0) + 1).min(self.total);
+        let mut workers = self.wait_for_workers(count);
+
+        challenge.solve(&mut workers)
+    }
+
     pub fn run_all(&mut self, challenges: Vec<ChallengeObject>) -> Vec<ChallengeResult> {
         for challenge in challenges.into_iter() {
             self.run(challenge);

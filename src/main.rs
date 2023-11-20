@@ -50,10 +50,13 @@ fn main() -> std::io::Result<()> {
         None => AocExecutor::default(),
     };
 
-    let mut results = executor.run_all(challenges);
+    let mut results = if challenges.len() > 1 {
+        executor.run_all(challenges)
+    } else {
+        vec![executor.run_one(challenges.pop().unwrap())]
+    };
 
     results.sort_by_key(|r| r.year * 10 + r.day);
-
     for result in results {
         println!("[{} day {}] {:?}", result.year, result.day, result.solution);
     }
