@@ -1,4 +1,16 @@
-use std::fs;
+use lib::aoc;
+use lib::challenge::Challenge;
+
+pub struct Day25;
+
+impl Challenge for Day25 {
+    aoc!(year = 2022, day = 25);
+
+    fn solve(input: String) -> (String, String) {
+        let res = input.lines().map(String::from).reduce(add_snafu).unwrap();
+        (res.to_string(), "".into())
+    }
+}
 
 fn decimal(c: char) -> i32 {
     match c {
@@ -7,7 +19,7 @@ fn decimal(c: char) -> i32 {
         '2' => 2,
         '-' => -1,
         '=' => -2,
-        _ => unreachable!()
+        _ => unreachable!(),
     }
 }
 
@@ -24,7 +36,7 @@ fn snafu(i: i32) -> (char, i32) {
         3 => ('=', 1),
         4 => ('-', 1),
         5 => ('0', 1),
-        _ => unreachable!()
+        _ => unreachable!(),
     }
 }
 
@@ -56,9 +68,4 @@ fn add_snafu(num1: String, num2: String) -> String {
     }
 
     res.into_iter().rev().collect::<String>()
-}
-
-fn main() {
-    let content = fs::read_to_string("input").unwrap();
-    println!("{}", content.lines().map(String::from).reduce(add_snafu).unwrap());
 }

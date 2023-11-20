@@ -35,10 +35,10 @@ enum Entry {
 }
 
 fn parse_entry(s: &str) -> (String, Entry) {
-    let (a, b) = s.split_once(" ").unwrap();
+    let (a, b) = s.split_once(' ').unwrap();
     match a {
         "dir" => (b.to_string(), Entry::Dir(Vec::new(), 0)),
-        size @ _ => (b.to_string(), Entry::File(size.parse().unwrap())),
+        size => (b.to_string(), Entry::File(size.parse().unwrap())),
     }
 }
 
@@ -80,7 +80,7 @@ fn build_fs(mut root: &mut Entry, pwd: &mut Vec<String>, cmd: &str) {
             ".." => {
                 pwd.pop();
             }
-            e @ _ => {
+            e => {
                 pwd.push(String::from(e));
             }
         }
@@ -94,11 +94,11 @@ fn build_fs(mut root: &mut Entry, pwd: &mut Vec<String>, cmd: &str) {
 
         if let Entry::Dir(v, _) = root {
             v.extend(
-                cmd.split_once("\n")
+                cmd.split_once('\n')
                     .unwrap()
                     .1
                     .trim()
-                    .split("\n")
+                    .split('\n')
                     .map(parse_entry),
             );
         }

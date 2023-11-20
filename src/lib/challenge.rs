@@ -9,6 +9,10 @@ pub trait Challenge {
     fn year() -> usize;
     fn day() -> usize;
     fn solve(input: String) -> (String, String);
+
+    fn example() -> Option<&'static str> {
+        None
+    }
 }
 
 pub trait ThreadedChallenge {
@@ -16,6 +20,10 @@ pub trait ThreadedChallenge {
     fn day() -> usize;
     fn worker_hint() -> Option<usize>;
     fn solve(input: String, workers: &mut WorkerGroup) -> (String, String);
+
+    fn example() -> Option<&'static str> {
+        None
+    }
 
     fn into_obj() -> ChallengeObject {
         ChallengeObject {
@@ -28,7 +36,8 @@ pub trait ThreadedChallenge {
                 let time = time::Instant::now() - start;
                 (solution, time)
             }),
-            input: String::new(),
+            input: String::default(),
+            example: Self::example(),
         }
     }
 }
@@ -49,6 +58,10 @@ where
         None
     }
 
+    fn example() -> Option<&'static str> {
+        T::example()
+    }
+
     fn solve(input: String, _: &mut WorkerGroup) -> (String, String) {
         T::solve(input)
     }
@@ -60,23 +73,29 @@ pub struct ChallengeObject {
     pub worker_hint: Option<usize>,
     pub solve: Solver,
     pub input: String,
+    pub example: Option<&'static str>,
 }
 
 pub struct ChallengeResult {
     pub year: usize,
     pub day: usize,
     pub solution: (String, String),
+    pub example: Option<(String, String)>,
     pub duration: Duration,
 }
 
 impl ChallengeObject {
     pub fn solve(self, workers: &mut WorkerGroup) -> ChallengeResult {
+        let example = self
+            .example
+            .map(|input| (self.solve)(input.to_string(), workers).0);
         let (solution, duration) = (self.solve)(self.input, workers);
 
         ChallengeResult {
             year: self.year,
             day: self.day,
             solution,
+            example,
             duration,
         }
     }
@@ -104,6 +123,15 @@ macro_rules! day {
 macro_rules! workers {
     ($x:expr) => {
         fn worker_hint() -> Option<usize> {
+            Some($x)
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! example {
+    ($x:expr) => {
+        fn example() -> Option<&'static str> {
             Some($x)
         }
     };

@@ -1,6 +1,8 @@
-use std::fs;
-use std::iter;
+use lib::aoc;
+use lib::challenge::Challenge;
+
 use std::collections::HashMap;
+use std::iter;
 
 const EMPTY_ROW: u8 = 1 << 7;
 const PADDING: usize = 7;
@@ -11,22 +13,59 @@ type Rock = Vec<u8>;
 #[derive(Clone)]
 enum Move {
     Left,
-    Right
+    Right,
 }
 
 type Cache = HashMap<(usize, usize), (usize, usize)>;
 type Cycle = ((usize, usize), (usize, usize));
 
+pub struct Day17;
+
+impl Challenge for Day17 {
+    aoc!(year = 2022, day = 17);
+
+    fn solve(input: String) -> (String, String) {
+        let moves = input
+            .bytes()
+            .filter_map(|b| {
+                if b == b'<' {
+                    Some(Move::Left)
+                } else if b == b'>' {
+                    Some(Move::Right)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        let rocks = [
+            vec!["####"],
+            vec![".#.", "###", ".#."],
+            vec!["..#", "..#", "###"],
+            vec!["#", "#", "#", "#"],
+            vec!["##", "##"],
+        ]
+        .iter()
+        .map(|v| from_str_slice(v))
+        .collect::<Vec<_>>();
+
+        let fst = solve(&rocks, &moves, 2022);
+        let snd = solve(&rocks, &moves, 1000000000000);
+
+        (fst.to_string(), snd.to_string())
+    }
+}
+
 fn from_str_slice(s: &[&str]) -> Rock {
-    s.iter().rev().copied().map(|s| {
-        s.chars().enumerate().fold(0, |acc, (i, c)| {
-            if c == '#' {
-                acc | 1 << i
-            } else {
-                acc
-            }
+    s.iter()
+        .rev()
+        .copied()
+        .map(|s| {
+            s.chars()
+                .enumerate()
+                .fold(0, |acc, (i, c)| if c == '#' { acc | 1 << i } else { acc })
         })
-    }).collect()
+        .collect()
 }
 
 struct RotVec<T> {
@@ -40,7 +79,7 @@ impl<T> RotVec<T> {
     }
 
     fn get_next(&mut self) -> &T {
-        self.idx = self.idx + 1;
+        self.idx += 1;
         &self.vec[(self.idx - 1) % self.vec.len()]
     }
 
@@ -53,16 +92,17 @@ impl<T> RotVec<T> {
     }
 }
 
-fn drop(room: &mut Vec<u8>, rocks: &mut RotVec<Rock>, moves: &mut RotVec<Move>, cache: &mut Cache) -> (usize, Option<Cycle>) {
+fn drop(
+    room: &mut Vec<u8>,
+    rocks: &mut RotVec<Rock>,
+    moves: &mut RotVec<Move>,
+    cache: &mut Cache,
+) -> (usize, Option<Cycle>) {
     let cycle = {
         let entry = (rocks.get_idx(), moves.get_idx());
         let value = (rocks.get_abs_idx(), room.len() - PADDING);
 
-        if let Some(old) = cache.insert(entry, value) {
-            Some((old, value))
-        } else {
-            None
-        }
+        cache.insert(entry, value).map(|old| (old, value))
     };
 
     let rock = rocks.get_next();
@@ -71,29 +111,37 @@ fn drop(room: &mut Vec<u8>, rocks: &mut RotVec<Rock>, moves: &mut RotVec<Move>, 
     loop {
         match moves.get_next() {
             Move::Left => {
-                if pos.0 > 0 && rock.iter().enumerate().all(
-                    |(i, piece)| piece << (pos.0 - 1) & room[pos.1 + i] == 0
-                ) {
+                if pos.0 > 0
+                    && rock
+                        .iter()
+                        .enumerate()
+                        .all(|(i, piece)| piece << (pos.0 - 1) & room[pos.1 + i] == 0)
+                {
                     pos.0 -= 1;
                 }
-            },
+            }
             Move::Right => {
-                if rock.iter().enumerate().all(
-                    |(i, piece)| piece << (pos.0 + 1) & room[pos.1 + i] == 0
-                ) {
+                if rock
+                    .iter()
+                    .enumerate()
+                    .all(|(i, piece)| piece << (pos.0 + 1) & room[pos.1 + i] == 0)
+                {
                     pos.0 += 1;
                 }
-            },
+            }
         }
 
-        if pos.1 > 0 && rock.iter().enumerate().all(
-            |(i, piece)| piece << pos.0 & room[pos.1 + i - 1] == 0
-        ) {
+        if pos.1 > 0
+            && rock
+                .iter()
+                .enumerate()
+                .all(|(i, piece)| piece << pos.0 & room[pos.1 + i - 1] == 0)
+        {
             pos.1 -= 1;
-            continue
+            continue;
         }
 
-        break
+        break;
     }
 
     for (i, piece) in rock.iter().enumerate() {
@@ -110,9 +158,9 @@ fn drop(room: &mut Vec<u8>, rocks: &mut RotVec<Rock>, moves: &mut RotVec<Move>, 
     (room.len() - PADDING, cycle)
 }
 
-fn solve(rocks: &Vec<Rock>, moves: &Vec<Move>, n: usize) -> usize {
-    let rot_rocks = &mut RotVec::new(rocks.clone());
-    let rot_moves = &mut RotVec::new(moves.clone());
+fn solve(rocks: &[Rock], moves: &[Move], n: usize) -> usize {
+    let rot_rocks = &mut RotVec::new(rocks.to_owned());
+    let rot_moves = &mut RotVec::new(moves.to_owned());
 
     let mut room = vec![EMPTY_ROW; PADDING];
     let mut cache = HashMap::new();
@@ -126,7 +174,7 @@ fn solve(rocks: &Vec<Rock>, moves: &Vec<Move>, n: usize) -> usize {
 
         if let Some(c) = cycle {
             if let Some(prev) = cycles.last() {
-                if prev.0.0 != c.0.0 - 1 {
+                if prev.0 .0 != c.0 .0 - 1 {
                     cycles.clear();
                 }
             }
@@ -134,35 +182,11 @@ fn solve(rocks: &Vec<Rock>, moves: &Vec<Move>, n: usize) -> usize {
             cycles.push(c);
             if cycles.len() > CYCLE_THRESHOLD {
                 let c = cycles[0];
-                return (n - c.0.0) / (c.1.0 - c.0.0) * (c.1.1 - c.0.1) + heights[c.0.0 - 1 + (n - c.0.0) % (c.1.0 - c.0.0)];
+                return (n - c.0 .0) / (c.1 .0 - c.0 .0) * (c.1 .1 - c.0 .1)
+                    + heights[c.0 .0 - 1 + (n - c.0 .0) % (c.1 .0 - c.0 .0)];
             }
         }
     }
 
     heights[n - 1]
-}
-
-fn main() {
-    let content = fs::read_to_string("input").unwrap();
-
-    let moves = content.bytes().filter_map(|b| {
-        if b == '<' as u8 {
-            Some(Move::Left)
-        } else if b == '>' as u8 {
-            Some(Move::Right)
-        } else {
-            None
-        }
-    }).collect::<Vec<_>>();
-
-    let rocks = [
-        vec!["####"],
-        vec![".#.", "###", ".#."],
-        vec!["..#", "..#", "###"],
-        vec!["#", "#", "#", "#"],
-        vec!["##", "##"],
-    ].iter().map(|v| from_str_slice(v)).collect::<Vec<_>>();
-
-    println!("1: {}", solve(&rocks, &moves, 2022));
-    println!("2: {}", solve(&rocks, &moves, 1000000000000));
 }

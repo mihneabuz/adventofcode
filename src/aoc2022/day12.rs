@@ -1,10 +1,10 @@
 use lib::aoc;
 use lib::challenge::Challenge;
 
-const LOWEST: u8 = 'a' as u8;
-const START: u8 = 'S' as u8;
-const EXIT: u8 = 'E' as u8;
-const EXIT_ELEV: u8 = 'z' as u8;
+const LOWEST: u8 = b'a';
+const START: u8 = b'S';
+const EXIT: u8 = b'E';
+const EXIT_ELEV: u8 = b'z';
 
 pub struct Day12;
 
@@ -22,13 +22,13 @@ impl Challenge for Day12 {
 
         let mut start = (0, 0);
         let mut exit = (0, 0);
-        for i in 0..n {
-            for j in 0..m {
-                if map[i][j] == START {
+        for (i, row) in map.iter().enumerate() {
+            for (j, &value) in row.iter().enumerate() {
+                if value == START {
                     start = (i, j);
                 }
 
-                if map[i][j] == EXIT {
+                if value == EXIT {
                     exit = (i, j);
                 }
             }
@@ -39,7 +39,7 @@ impl Challenge for Day12 {
         let mut queue = vec![start];
 
         let mut iter1 = 1;
-        'outer: while queue.len() > 0 {
+        'outer: while !queue.is_empty() {
             let mut next_queue = Vec::new();
 
             while let Some((i, j)) = queue.pop() {
@@ -69,7 +69,7 @@ impl Challenge for Day12 {
         queue = vec![exit];
 
         let mut iter2 = 1;
-        'outer: while queue.len() > 0 {
+        'outer: while !queue.is_empty() {
             let mut next_queue = Vec::new();
 
             while let Some((i, j)) = queue.pop() {
@@ -83,7 +83,11 @@ impl Challenge for Day12 {
                         break 'outer;
                     }
 
-                    let val = if map[i][j] == EXIT { EXIT_ELEV } else { map[i][j] };
+                    let val = if map[i][j] == EXIT {
+                        EXIT_ELEV
+                    } else {
+                        map[i][j]
+                    };
 
                     if !seen[di][dj] && val <= map[di][dj] + 1 {
                         next_queue.push((di, dj));

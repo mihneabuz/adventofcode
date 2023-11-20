@@ -79,7 +79,7 @@ impl AocInputs {
 
             let input = downloader.get(&url)?;
 
-            self.cache.set(key, input.trim())?;
+            self.cache.set(key, input.trim_end())?;
 
             return Ok(input.trim().to_string());
         }

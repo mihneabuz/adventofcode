@@ -15,8 +15,8 @@ impl Challenge for Day6 {
 }
 
 fn distinc_chars(s: &str) -> bool {
-    let mut seen = vec![false; 26];
-    for b in s.bytes().map(|b| (b - 'a' as u8) as usize) {
+    let mut seen = [false; 26];
+    for b in s.bytes().map(|b| (b - b'a') as usize) {
         if seen[b] {
             return false;
         }

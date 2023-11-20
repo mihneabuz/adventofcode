@@ -1,7 +1,32 @@
-use std::fs;
+use lib::aoc;
+use lib::challenge::Challenge;
 
 use lazy_static::lazy_static;
 use regex::Regex;
+
+pub struct Day19;
+
+impl Challenge for Day19 {
+    aoc!(year = 2022, day = 19);
+
+    fn solve(input: String) -> (String, String) {
+        let blueprints = input.lines().map(parse_blueprint).collect::<Vec<_>>();
+
+        let res1 = blueprints
+            .iter()
+            .enumerate()
+            .map(|(i, bp)| (i + 1) * solve(24, 2000, bp))
+            .sum::<usize>();
+
+        let res2 = blueprints
+            .iter()
+            .take(3)
+            .map(|bp| solve(32, 2000, bp))
+            .product::<usize>();
+
+        (res1.to_string(), res2.to_string())
+    }
+}
 
 fn parse_blueprint(s: &str) -> Blueprint {
     lazy_static! {
@@ -169,28 +194,7 @@ fn euristic(s: &State, bp: &Blueprint, t: i32, total: i32) -> i32 {
         + s.obsidian_robot * bp.obsidian_val * 4
         + s.geode_robot * bp.geode_val * 16;
 
-    let rocks = s.obsidian * bp.obsidian_val * 4
-        + (s.geode + 1) * bp.geode_val * 16;
+    let rocks = s.obsidian * bp.obsidian_val * 4 + (s.geode + 1) * bp.geode_val * 16;
 
     robots * (total - t) + rocks
-}
-
-fn main() {
-    let content = fs::read_to_string("input").unwrap();
-    let blueprints = content.lines().map(parse_blueprint).collect::<Vec<_>>();
-
-    let res1 = blueprints
-        .iter()
-        .enumerate()
-        .map(|(i, bp)| (i + 1) * solve(24, 2000, &bp))
-        .sum::<usize>();
-
-    let res2 = blueprints
-        .iter()
-        .take(3)
-        .map(|bp| solve(32, 2000, &bp))
-        .product::<usize>();
-
-    println!("1: {}", res1);
-    println!("2: {}", res2);
 }

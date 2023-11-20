@@ -1,6 +1,7 @@
 use lib::aoc;
 use lib::challenge::Challenge;
 
+use itertools::Itertools;
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -12,34 +13,40 @@ impl Challenge for Day11 {
     fn solve(input: String) -> (String, String) {
         let mut monkeys1 = input.split("\n\n").map(parse_monkey).collect::<Vec<_>>();
         let mut monkeys2 = monkeys1.clone();
-        let modulo: i64 = monkeys1
-            .iter()
-            .map(|m| m.test)
-            .reduce(|acc, x| acc * x / gcd(acc, x))
-            .unwrap();
+
+        let modulo = monkeys1.iter().map(|m| m.test).product();
 
         for _ in 0..20 {
             for i in 0..monkeys1.len() {
-                for (dest, val) in monkeys1[i].throw(3, modulo) {
+                for (dest, val) in monkeys1[i].throw::<3>(modulo) {
                     monkeys1[dest as usize].items.push(val);
                 }
             }
         }
-        let mut inspects1 = monkeys1.iter().map(|m| m.inspects).collect::<Vec<_>>();
-        inspects1.sort();
+
+        let fst = monkeys1
+            .into_iter()
+            .map(|m| m.inspects)
+            .sorted()
+            .rev()
+            .take(2)
+            .product::<i64>();
 
         for _ in 0..10000 {
             for i in 0..monkeys2.len() {
-                for (dest, val) in monkeys2[i].throw(1, modulo) {
+                for (dest, val) in monkeys2[i].throw::<1>(modulo) {
                     monkeys2[dest as usize].items.push(val);
                 }
             }
         }
-        let mut inspects2 = monkeys2.iter().map(|m| m.inspects).collect::<Vec<_>>();
-        inspects2.sort();
 
-        let fst = inspects1[inspects1.len() - 1] * inspects1[inspects1.len() - 2];
-        let snd = inspects2[inspects2.len() - 1] * inspects2[inspects2.len() - 2];
+        let snd = monkeys2
+            .into_iter()
+            .map(|m| m.inspects)
+            .sorted()
+            .rev()
+            .take(2)
+            .product::<i64>();
 
         (fst.to_string(), snd.to_string())
     }
@@ -89,12 +96,12 @@ impl Expr {
 }
 
 impl Monkey {
-    fn throw(&mut self, relief: i64, modulo: i64) -> Vec<(i32, i64)> {
+    fn throw<const R: i64>(&mut self, modulo: i64) -> Vec<(i32, i64)> {
         self.items
             .drain(..)
             .map(|item| {
                 self.inspects += 1;
-                let new = (self.expr.execute(item) / relief) % modulo;
+                let new = (self.expr.execute(item) / R) % (modulo * R);
                 let next = if new % self.test == 0 {
                     self.true_branch
                 } else {
@@ -143,33 +150,17 @@ fn parse_expr(s: &str) -> Expr {
 
     let operand1 = match splits[0] {
         "old" => Operand::Old,
-        d @ _ => Operand::Int(d.parse().unwrap()),
+        d => Operand::Int(d.parse().unwrap()),
     };
 
     let operand2 = match splits[2] {
         "old" => Operand::Old,
-        d @ _ => Operand::Int(d.parse().unwrap()),
+        d => Operand::Int(d.parse().unwrap()),
     };
 
     Expr {
         op,
         operand1,
         operand2,
-    }
-}
-
-fn gcd(a: i64, b: i64) -> i64 {
-    if a == 0 {
-        return b;
-    }
-
-    if b == 0 {
-        return a;
-    }
-
-    match a.cmp(&b) {
-        std::cmp::Ordering::Equal => a,
-        std::cmp::Ordering::Less => gcd(a, b % a),
-        std::cmp::Ordering::Greater => gcd(b, a % b),
     }
 }

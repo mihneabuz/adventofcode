@@ -9,12 +9,10 @@ impl Challenge for Day8 {
     aoc!(year = 2022, day = 8);
 
     fn solve(input: String) -> (String, String) {
-        let mut map = input
-            .split("\n")
-            .map(|s| s.bytes().map(|b| b - '0' as u8).collect::<Vec<_>>())
+        let map = input
+            .lines()
+            .map(|s| s.bytes().map(|b| b - b'0').collect::<Vec<_>>())
             .collect::<Vec<_>>();
-
-        map.pop();
 
         let n = map.len();
 
@@ -100,7 +98,7 @@ fn compute_score(mut iter: impl Iterator<Item = u8>) -> i32 {
     let start = iter.next().unwrap();
     let mut score = 0;
 
-    while let Some(next) = iter.next() {
+    for next in iter {
         score += 1;
 
         if next >= start {

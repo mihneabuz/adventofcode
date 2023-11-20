@@ -1,38 +1,28 @@
 use lib::aoc;
 use lib::challenge::Challenge;
 
+use itertools::Itertools;
+
 pub struct Day1;
 
 impl Challenge for Day1 {
     aoc!(year = 2022, day = 1);
 
     fn solve(input: String) -> (String, String) {
-        let mut elves = Vec::new();
-        let mut acc = 0u64;
+        let weights = input
+            .lines()
+            .map(|line| line.trim().parse::<usize>().unwrap_or(0));
 
-        input.lines().for_each(|line| {
-            if line.len() > 1 {
-                acc += line[..line.len() - 1].parse::<u64>().unwrap();
-            } else {
-                elves.push(acc);
-                acc = 0;
-            }
-        });
+        let elfs = weights
+            .group_by(|&w| w > 0)
+            .into_iter()
+            .map(|(_, elf)| elf.sum::<usize>())
+            .collect::<Vec<_>>();
 
-        let first = elves.iter().max().unwrap();
+        let fst = elfs.iter().copied().max().unwrap();
 
-        let mut top3 = vec![elves[0], elves[1], elves[2]];
-        top3.sort();
+        let snd = elfs.into_iter().sorted().rev().take(3).sum::<usize>();
 
-        elves[3..].into_iter().for_each(|&elf| {
-            if elf > top3[0] {
-                top3[0] = elf;
-                top3.sort();
-            }
-        });
-
-        let second = top3.into_iter().sum::<u64>();
-
-        (first.to_string(), second.to_string())
+        (fst.to_string(), snd.to_string())
     }
 }

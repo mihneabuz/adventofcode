@@ -1,5 +1,5 @@
-use lib::aoc;
 use lib::challenge::Challenge;
+use lib::aoc;
 
 pub struct Day2;
 
@@ -8,7 +8,7 @@ impl Challenge for Day2 {
 
     fn solve(input: String) -> (String, String) {
         let (res1, res2) = input.lines().fold((0, 0), |acc, line| {
-            let (p1, p2) = line.split_once(" ").unwrap();
+            let (p1, p2) = line.split_once(' ').unwrap();
             (
                 acc.0 + score(p1, choice1(p2)),
                 acc.1 + score(p1, choice2(p1, p2)),
@@ -27,15 +27,23 @@ fn score(p1: &str, p2: &str) -> i32 {
         _ => unreachable!(),
     };
 
-    let result = match (p1 == p2, p1, p2) {
-        (true, _, _) => 3,
-        (false, "A", "B") => 6,
-        (false, "B", "C") => 6,
-        (false, "C", "A") => 6,
-        (false, _, _) => 0,
+    let result = match (p1, p2) {
+        ("A", "A") => 3,
+        ("B", "B") => 3,
+        ("C", "C") => 3,
+
+        ("A", "B") => 6,
+        ("B", "C") => 6,
+        ("C", "A") => 6,
+
+        ("A", "C") => 0,
+        ("B", "A") => 0,
+        ("C", "B") => 0,
+
+        _ => unreachable!()
     };
 
-    return piece + result;
+    piece + result
 }
 
 fn choice1(p2: &str) -> &str {

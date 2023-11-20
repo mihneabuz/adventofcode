@@ -18,9 +18,9 @@ impl Challenge for Day5 {
         let n = lines[si - 1].split_whitespace().count();
         let mut stacks = vec![vec![]; n];
 
-        for line in init.into_iter().skip(1).map(|s| s.as_bytes()).rev() {
+        for line in init.iter().map(|s| s.as_bytes()).rev().skip(1) {
             for i in 0..n {
-                if i < line.len() && line[4 * i + 1] != ' ' as u8 {
+                if i < line.len() && line[4 * i + 1] != b' ' {
                     stacks[i].push(line[4 * i + 1] as char);
                 }
             }
@@ -28,7 +28,7 @@ impl Challenge for Day5 {
 
         let mut stacks_copy = stacks.clone();
 
-        for step in steps.into_iter().skip(1) {
+        for step in steps.iter().skip(1) {
             step.parse::<Step>()
                 .unwrap()
                 .execute(&mut stacks)

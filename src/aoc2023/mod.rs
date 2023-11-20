@@ -1,4 +1,4 @@
-use lib::challenge::{ChallengeObject, ThreadedChallenge};
+use lib::challenge::ChallengeObject;
 
 automod::dir!(pub "src/aoc2023");
 

@@ -56,21 +56,21 @@ fn parse_list(s: &str) -> NestedList<i64> {
         while i < b.len() {
             let mut j = i + 1;
 
-            if b[i] == '[' as u8 {
+            if b[i] == b'[' {
                 let mut open = 1;
                 while open > 0 {
-                    if b[j] == '[' as u8 {
+                    if b[j] == b'[' {
                         open += 1;
                     }
 
-                    if b[j] == ']' as u8 {
+                    if b[j] == b']' {
                         open -= 1;
                     }
 
                     j += 1;
                 }
             } else {
-                while j < b.len() && b[j] != ',' as u8 {
+                while j < b.len() && b[j] != b',' {
                     j += 1;
                 }
             }
@@ -85,7 +85,7 @@ fn parse_list(s: &str) -> NestedList<i64> {
 
 fn compare_lists(l1: &NestedList<i64>, l2: &NestedList<i64>) -> Ordering {
     match (l1, l2) {
-        (NestedList::Item(a), NestedList::Item(b)) => a.cmp(&b),
+        (NestedList::Item(a), NestedList::Item(b)) => a.cmp(b),
         (NestedList::Item(a), NestedList::List(b)) => compare_lists(
             &NestedList::List(vec![NestedList::Item(*a)]),
             &NestedList::List(b.clone()),
@@ -95,9 +95,9 @@ fn compare_lists(l1: &NestedList<i64>, l2: &NestedList<i64>) -> Ordering {
             &NestedList::List(vec![NestedList::Item(*b)]),
         ),
         (NestedList::List(a), NestedList::List(b)) => {
-            let (mut iter1, mut iter2) = (a.iter(), b.iter());
+            let (iter1, mut iter2) = (a.iter(), b.iter());
 
-            while let Some(item1) = iter1.next() {
+            for item1 in iter1 {
                 if let Some(item2) = iter2.next() {
                     match compare_lists(item1, item2) {
                         Ordering::Equal => {}

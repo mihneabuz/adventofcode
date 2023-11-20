@@ -74,6 +74,14 @@ fn main() -> std::io::Result<()> {
             style(title).bold().blue()
         );
 
+        if let Some((example1, example2)) = result.example {
+            println!(
+                "   example: {} {}",
+                style(example1).green(),
+                style(example2).red()
+            );
+        }
+
         let (fst, snd) = result.solution;
         if !fst.contains('\n') && !snd.contains('\n') {
             println!("   {:#29} {}", style(fst).green(), style(snd).red());

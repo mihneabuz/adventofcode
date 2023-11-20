@@ -1,48 +1,11 @@
-use std::sync::Arc;
+use lib::{aoc, challenge::Challenge};
 
-use lib::challenge::{Challenge, ThreadedChallenge};
-use lib::executor::WorkerGroup;
-use lib::{aoc, workers};
+pub struct Day1;
 
-pub struct Test;
-
-impl Challenge for Test {
-    aoc!(year = 2022, day = 1);
+impl Challenge for Day1 {
+    aoc!(year = 2023, day = 1);
 
     fn solve(input: String) -> (String, String) {
-        std::thread::sleep(std::time::Duration::from_secs(1));
         (input, "world".into())
-    }
-}
-
-pub struct ThreadedTest;
-
-impl ThreadedChallenge for ThreadedTest {
-    aoc!(year = 2022, day = 2);
-
-    workers!(4);
-    fn solve(input: String, workers: &mut WorkerGroup) -> (String, String) {
-        let nums = (0..10000).collect::<Arc<_>>();
-
-        let mut handles = Vec::new();
-
-        let chunk_size = nums.len() / workers.available();
-        for (i, worker) in workers.iter_mut().enumerate() {
-            let nums = Arc::clone(&nums);
-
-            let handle = worker.run(move || {
-                let slice = &nums[chunk_size * i..chunk_size * (i + 1)];
-                slice.iter().sum::<usize>()
-            });
-
-            handles.push(handle);
-        }
-
-        let total = handles
-            .into_iter()
-            .map(|h| h.join().unwrap())
-            .sum::<usize>();
-
-        (input, total.to_string())
     }
 }

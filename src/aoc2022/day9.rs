@@ -16,15 +16,15 @@ impl Challenge for Day9 {
         let mut short_set = HashSet::new();
         let mut long_set = HashSet::new();
 
-        for (dir, count) in input.lines().map(|s| s.split_once(" ").unwrap()) {
+        for (dir, count) in input.lines().map(|s| s.split_once(' ').unwrap()) {
             for _ in 0..(count.parse().unwrap()) {
                 let dir = dir.chars().next().unwrap();
 
                 move_knots(dir, &mut short_rope);
                 move_knots(dir, &mut long_rope);
 
-                short_set.insert(short_rope.last().unwrap().clone());
-                long_set.insert(long_rope.last().unwrap().clone());
+                short_set.insert(*short_rope.last().unwrap());
+                long_set.insert(*long_rope.last().unwrap());
             }
         }
 

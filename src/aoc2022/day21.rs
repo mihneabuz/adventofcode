@@ -1,5 +1,7 @@
+use lib::aoc;
+use lib::challenge::Challenge;
+
 use std::collections::HashMap;
-use std::fs;
 
 enum Yell<'a> {
     Number(i64),
@@ -8,11 +10,45 @@ enum Yell<'a> {
 
 type Monkeys<'a> = HashMap<&'a str, Yell<'a>>;
 
+pub struct Day21;
+
+impl Challenge for Day21 {
+    aoc!(year = 2022, day = 21);
+
+    fn solve(input: String) -> (String, String) {
+        let res1 = {
+            let mut monkeys = input.lines().map(parse_monkey).collect::<HashMap<_, _>>();
+            loop {
+                match monkeys.get("root").unwrap() {
+                    Yell::Number(x) => break *x,
+                    _ => reduce(&mut monkeys),
+                }
+            }
+        };
+
+        let res2 = {
+            let monkeys2 = input.lines().map(parse_monkey).collect::<HashMap<_, _>>();
+            if let Yell::Expr(a, b, _) = monkeys2.get("root").unwrap() {
+                let mut values = [
+                    (value(&monkeys2, a, "humn"), a),
+                    (value(&monkeys2, b, "humn"), b),
+                ];
+                values.sort();
+                solve(&monkeys2, values[0].1, values[1].0.unwrap(), "humn")
+            } else {
+                unreachable!()
+            }
+        };
+
+        (res1.to_string(), res2.to_string())
+    }
+}
+
 fn parse_yell(s: &str) -> Yell {
     if let Ok(x) = s.parse() {
         Yell::Number(x)
     } else {
-        let ss = s.split(" ").collect::<Vec<_>>();
+        let ss = s.split(' ').collect::<Vec<_>>();
         Yell::Expr(ss[0], ss[2], ss[1].chars().next().unwrap())
     }
 }
@@ -36,7 +72,8 @@ fn reduce(monkeys: &mut Monkeys) {
         if let Yell::Expr(a, b, op) = monkeys.get(key).unwrap() {
             if let Yell::Number(a) = monkeys.get(a).unwrap() {
                 if let Yell::Number(b) = monkeys.get(b).unwrap() {
-                    monkeys.insert(key,
+                    monkeys.insert(
+                        key,
                         Yell::Number(match op {
                             '+' => a + b,
                             '-' => a - b,
@@ -91,37 +128,9 @@ fn solve(monkeys: &Monkeys, key: &str, res: i64, me: &str) -> i64 {
             (Some(x), '/', None) => solve(monkeys, b, x / res, me),
             (None, '/', Some(x)) => solve(monkeys, a, x * res, me),
 
-            _ => unreachable!()
-        }
+            _ => unreachable!(),
+        };
     } else {
         unreachable!()
     }
-}
-
-fn main() {
-    let content = fs::read_to_string("input").unwrap();
-
-    let res1 = {
-        let mut monkeys = content.lines().map(parse_monkey).collect::<HashMap<_, _>>();
-        loop {
-            match monkeys.get("root").unwrap() {
-                Yell::Number(x) => break *x,
-                _ => reduce(&mut monkeys),
-            }
-        }
-    };
-
-    let res2 = {
-        let monkeys2 = content.lines().map(parse_monkey).collect::<HashMap<_, _>>();
-        if let Yell::Expr(a, b, _) = monkeys2.get("root").unwrap() {
-            let mut values = vec![(value(&monkeys2, a, "humn"), a), (value(&monkeys2, b, "humn"), b)];
-            values.sort();
-            solve(&monkeys2, *values[0].1, values[1].0.unwrap(), "humn")
-        } else {
-            unreachable!()
-        }
-    };
-
-    println!("1: {}", res1);
-    println!("2: {}", res2);
 }

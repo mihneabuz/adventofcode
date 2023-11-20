@@ -49,8 +49,8 @@ impl Challenge for Day14 {
         lines.iter().for_each(|line| {
             line.iter().reduce(|prev, curr| {
                 if prev.0 == curr.0 {
-                    for i in cmp::min(prev.1, curr.1)..=cmp::max(prev.1, curr.1) {
-                        map[i][curr.0] = ROCK;
+                    for row in &mut map[cmp::min(prev.1, curr.1)..=cmp::max(prev.1, curr.1)] {
+                        row[curr.0] = ROCK;
                     }
                 }
 
@@ -86,7 +86,7 @@ impl Challenge for Day14 {
 fn parse_lines(s: &str) -> Line {
     s.split(" -> ")
         .map(|s| {
-            let point = s.split_once(",").unwrap();
+            let point = s.split_once(',').unwrap();
             (point.0.parse().unwrap(), point.1.parse().unwrap())
         })
         .collect()

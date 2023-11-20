@@ -9,7 +9,7 @@ impl Challenge for Day4 {
     fn solve(input: String) -> (String, String) {
         let (mut res1, mut res2) = (0, 0);
         for line in input.lines() {
-            let (r1, r2) = line.split_once(",").unwrap();
+            let (r1, r2) = line.split_once(',').unwrap();
             let ((lo1, hi1), (lo2, hi2)) = (range(r1), range(r2));
 
             if (lo1 <= lo2 && hi1 >= hi2) || (lo2 <= lo1 && hi2 >= hi1) {
@@ -26,7 +26,7 @@ impl Challenge for Day4 {
 }
 
 fn range(s: &str) -> (i32, i32) {
-    let (lo, hi) = s.split_once("-").unwrap();
+    let (lo, hi) = s.split_once('-').unwrap();
     (lo.parse().unwrap(), hi.parse().unwrap())
 }
 

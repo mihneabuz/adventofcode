@@ -8,7 +8,7 @@ impl Challenge for Day10 {
 
     fn solve(input: String) -> (String, String) {
         let instructions = input.lines().map(parse_ins).collect::<Vec<_>>();
-        let mut cpu = CPU::new();
+        let mut cpu = Cpu::new();
 
         let fst = cpu.run(instructions).to_string();
         let snd = cpu.output().trim().to_string();
@@ -26,13 +26,13 @@ fn parse_ins(s: &str) -> Ins {
     if s.starts_with("noop") {
         Ins::Nop
     } else if s.starts_with("addx") {
-        Ins::Add(s.split_once(" ").unwrap().1.parse().unwrap(), 2)
+        Ins::Add(s.split_once(' ').unwrap().1.parse().unwrap(), 2)
     } else {
         unreachable!()
     }
 }
 
-struct CPU {
+struct Cpu {
     reg: i32,
     pc: usize,
     out: String,
@@ -42,7 +42,7 @@ const LBR: char = '\n';
 const FILL: char = '█';
 const EMPTY: char = ' ';
 
-impl CPU {
+impl Cpu {
     fn new() -> Self {
         Self {
             reg: 1,

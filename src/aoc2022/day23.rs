@@ -1,13 +1,56 @@
-use itertools::Itertools;
-use std::fs;
+use lib::aoc;
+use lib::challenge::Challenge;
+
 use std::iter;
+
+use itertools::Itertools;
 
 const EMPTY: char = '.';
 const ELF: char = '#';
-
 const ROUNDS: usize = 10;
 
 type Map = Vec<Vec<char>>;
+
+pub struct Day23;
+
+impl Challenge for Day23 {
+    aoc!(year = 2022, day = 23);
+
+    fn solve(input: String) -> (String, String) {
+        let n = input.lines().next().unwrap().len();
+        let pad = n;
+
+        let mut map = iter::repeat(iter::repeat('.').take(pad * 2 + n).collect::<Vec<_>>())
+            .take(pad)
+            .chain(input.lines().map(|l| {
+                iter::repeat('.')
+                    .take(pad)
+                    .chain(l.chars().chain(iter::repeat('.').take(pad)))
+                    .collect::<Vec<_>>()
+            }))
+            .chain(iter::repeat(iter::repeat('.').take(pad * 2 + n).collect::<Vec<_>>()).take(pad))
+            .collect::<Vec<_>>();
+
+        let (mut res1, mut res2) = (0, 0);
+        for round in 0.. {
+            if round == ROUNDS {
+                let b = bounds(&map);
+                let count = map.iter().flatten().filter(|&&t| t == ELF).count();
+                res1 = (b.1 - b.0 + 1) * (b.3 - b.2 + 1) - count;
+            }
+
+            let mut moves = calculate_moves(&map, round);
+            if moves.is_empty() {
+                res2 = round + 1;
+                break;
+            }
+
+            apply_moves(&mut map, &mut moves);
+        }
+
+        (res1.to_string(), res2.to_string())
+    }
+}
 
 #[derive(Debug)]
 struct Move {
@@ -95,11 +138,11 @@ fn calculate_moves(map: &Map, round: usize) -> Vec<Move> {
     res
 }
 
-fn apply_moves(map: &mut Map, moves: &mut Vec<Move>) {
+fn apply_moves(map: &mut Map, moves: &mut [Move]) {
     moves.sort_by_key(|m| m.to);
-    for (_, mut group) in &moves.into_iter().group_by(|m| m.to) {
+    for (_, mut group) in &moves.iter().group_by(|m| m.to) {
         let m = group.next().unwrap();
-        if let None = group.next() {
+        if group.next().is_none() {
             map[m.from.0][m.from.1] = EMPTY;
             map[m.to.0][m.to.1] = ELF;
         }
@@ -107,7 +150,12 @@ fn apply_moves(map: &mut Map, moves: &mut Vec<Move>) {
 }
 
 fn bounds(map: &Map) -> (usize, usize, usize, usize) {
-    let mut res = (map.len() / 2, map.len() / 2, map[0].len() / 2, map[0].len() / 2);
+    let mut res = (
+        map.len() / 2,
+        map.len() / 2,
+        map[0].len() / 2,
+        map[0].len() / 2,
+    );
     for (i, line) in map.iter().enumerate() {
         for (j, tile) in line.iter().enumerate() {
             if *tile == ELF {
@@ -117,37 +165,4 @@ fn bounds(map: &Map) -> (usize, usize, usize, usize) {
     }
 
     res
-}
-
-fn main() {
-    let content = fs::read_to_string("input").unwrap();
-    let n = content.lines().next().unwrap().len();
-    let pad = n;
-
-    let mut map = iter::repeat(iter::repeat('.').take(pad * 2 + n).collect::<Vec<_>>())
-        .take(pad)
-        .chain(content.lines().map(|l| {
-            iter::repeat('.')
-                .take(pad)
-                .chain(l.chars().chain(iter::repeat('.').take(pad)))
-                .collect::<Vec<_>>()
-        }))
-        .chain(iter::repeat(iter::repeat('.').take(pad * 2 + n).collect::<Vec<_>>()).take(pad))
-        .collect::<Vec<_>>();
-
-    for round in 0.. {
-        if round == ROUNDS {
-            let b = bounds(&map);
-            let count = map.iter().flatten().filter(|&&t| t == ELF).count();
-            println!("1: {}", (b.1 - b.0 + 1) * (b.3 - b.2 + 1) - count);
-        }
-
-        let mut moves = calculate_moves(&map, round);
-        if moves.len() == 0 {
-            println!("2: {}", round + 1);
-            break;
-        }
-
-        apply_moves(&mut map, &mut moves);
-    }
 }

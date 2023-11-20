@@ -1,4 +1,5 @@
-use std::fs;
+use lib::aoc;
+use lib::challenge::Challenge;
 
 const WALL: char = '#';
 
@@ -9,6 +10,30 @@ const LEFT: char = '<';
 
 type Pos = (usize, usize);
 type Map = Vec<Vec<char>>;
+
+pub struct Day24;
+
+impl Challenge for Day24 {
+    aoc!(year = 2022, day = 24);
+
+    fn solve(input: String) -> (String, String) {
+        let mut map: Vec<Vec<char>> = input.lines().map(|l| l.chars().collect()).collect();
+        map.insert(0, vec![WALL; map[0].len()]);
+        map.push(vec![WALL; map[0].len()]);
+
+        let start = (1, 1);
+        let end = (map.len() - 2, map[0].len() - 2);
+
+        map[start.0][start.1] = WALL;
+        map[end.0][end.1] = WALL;
+
+        let res1 = solve(&map, start, end, 1);
+        let tmp = solve(&map, end, start, res1);
+        let res2 = solve(&map, start, end, tmp);
+
+        (res1.to_string(), res2.to_string())
+    }
+}
 
 fn neighs((i, j): (usize, usize)) -> [(usize, usize); 5] {
     [(i + 1, j), (i, j + 1), (i, j), (i - 1, j), (i, j - 1)]
@@ -57,7 +82,7 @@ fn solve(map: &Map, start: Pos, end: Pos, min: usize) -> usize {
                     return iter;
                 }
 
-                if (di, dj) == start || valid(&map, (di, dj), iter) {
+                if (di, dj) == start || valid(map, (di, dj), iter) {
                     next_states.push((di, dj));
                 }
             }
@@ -70,25 +95,4 @@ fn solve(map: &Map, start: Pos, end: Pos, min: usize) -> usize {
     }
 
     0
-}
-
-fn main() {
-    let content = fs::read_to_string("input").unwrap();
-
-    let mut map: Vec<Vec<char>> = content.lines().map(|l| l.chars().collect()).collect();
-    map.insert(0, vec![WALL; map[0].len()]);
-    map.push(vec![WALL; map[0].len()]);
-
-    let start = (1, 1);
-    let end = (map.len() - 2, map[0].len() - 2);
-
-    map[start.0][start.1] = WALL;
-    map[end.0][end.1] = WALL;
-
-    let res1 = solve(&map, start, end, 1);
-    let tmp = solve(&map, end, start, res1);
-    let res2 = solve(&map, start, end, tmp);
-
-    println!("1: {}", res1);
-    println!("2: {}", res2);
 }
