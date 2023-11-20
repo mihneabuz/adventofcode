@@ -1,3 +1,4 @@
+mod aoc2022;
 mod aoc2023;
 
 use clap::Parser;
@@ -24,7 +25,10 @@ struct Args {
 fn main() -> std::io::Result<()> {
     let args = Args::parse();
 
-    let mut challenges: Vec<ChallengeObject> = aoc2023::challanges().into_iter().collect();
+    let mut challenges: Vec<ChallengeObject> = vec![aoc2022::challenges(), aoc2023::challenges()]
+        .into_iter()
+        .flatten()
+        .collect();
 
     if let Some(year) = args.year {
         challenges.retain(|c| c.year == year);
