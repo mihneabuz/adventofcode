@@ -2,6 +2,7 @@ mod aoc2022;
 mod aoc2023;
 
 use clap::Parser;
+use console::style;
 use lib::{challenge::ChallengeObject, executor::AocExecutor, inputs::AocInputs};
 
 #[derive(Parser, Debug)]
@@ -58,7 +59,19 @@ fn main() -> std::io::Result<()> {
 
     results.sort_by_key(|r| r.year * 10 + r.day);
     for result in results {
-        println!("[{} day {}] {:?}", result.year, result.day, result.solution);
+        let title = format!("{} day {:#2}", result.year, result.day);
+        println!(
+            " <============>  {}  <============>",
+            style(title).bold().blue()
+        );
+
+        let (fst, snd) = result.solution;
+        if !fst.contains('\n') && !snd.contains('\n') {
+            println!("   {:#28} {}", style(fst).green(), style(snd).red());
+        } else {
+            println!("   {}", style(fst.replace('\n', "\n   ")).green());
+            println!("   {}", style(snd.replace('\n', "\n   ")).red());
+        }
     }
 
     Ok(())

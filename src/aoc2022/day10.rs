@@ -1,4 +1,21 @@
-use std::fs;
+use lib::aoc;
+use lib::challenge::Challenge;
+
+pub struct Day10;
+
+impl Challenge for Day10 {
+    aoc!(year = 2022, day = 10);
+
+    fn solve(input: String) -> (String, String) {
+        let instructions = input.lines().map(parse_ins).collect::<Vec<_>>();
+        let mut cpu = CPU::new();
+
+        let fst = cpu.run(instructions).to_string();
+        let snd = cpu.output().trim().to_string();
+
+        (fst, snd)
+    }
+}
 
 enum Ins {
     Nop,
@@ -18,38 +35,43 @@ fn parse_ins(s: &str) -> Ins {
 struct CPU {
     reg: i32,
     pc: usize,
-    ins: Vec<Ins>,
+    out: String,
 }
 
+const LBR: char = '\n';
 const FILL: char = '█';
-const EMPT: char = ' ';
+const EMPTY: char = ' ';
 
 impl CPU {
-    fn new(ins: Vec<Ins>) -> Self {
-        Self { reg: 1, pc: 0, ins }
+    fn new() -> Self {
+        Self {
+            reg: 1,
+            pc: 0,
+            out: String::new(),
+        }
     }
 
-    fn run(&mut self) -> i32 {
+    fn run(&mut self, mut ins: Vec<Ins>) -> i32 {
         let mut clock = 1;
         let mut res = 0;
 
-        while self.pc < self.ins.len() {
+        while self.pc < ins.len() {
             if clock % 40 - 20 == 0 {
                 res += self.reg * clock;
             }
 
             let pixel = (clock - 1) % 40;
             if pixel == 0 {
-                println!();
+                self.out.push(LBR);
             }
 
             if self.reg - 1 <= pixel && pixel <= self.reg + 1 {
-                print!("{}", FILL);
+                self.out.push(FILL);
             } else {
-                print!("{}", EMPT);
+                self.out.push(EMPTY);
             }
 
-            match self.ins.get_mut(self.pc).unwrap() {
+            match ins.get_mut(self.pc).unwrap() {
                 Ins::Nop => self.pc += 1,
                 Ins::Add(x, 1) => {
                     self.reg += *x;
@@ -61,18 +83,10 @@ impl CPU {
             clock += 1;
         }
 
-        println!();
-
         res
     }
-}
 
-fn main() {
-    let instructions = fs::read_to_string("input")
-        .unwrap()
-        .lines()
-        .map(parse_ins)
-        .collect::<Vec<_>>();
-
-    println!("{}", CPU::new(instructions).run());
+    fn output(&self) -> &str {
+        &self.out
+    }
 }
