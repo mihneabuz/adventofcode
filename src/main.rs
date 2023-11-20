@@ -48,7 +48,8 @@ fn main() -> std::io::Result<()> {
     AocInputs::new(args.inputs_cache.unwrap_or("cache".into()), args.download)?
         .get_inputs(&mut challenges)?;
 
-    println!("Running {} challenges...", count);
+    let header = format!("Running {} challenges", count);
+    println!("\n   {: ^42}", style(header).bold().green());
 
     let mut executor = match args.worker_threads {
         Some(workers) => AocExecutor::with_workers(workers),
@@ -69,7 +70,7 @@ fn main() -> std::io::Result<()> {
     for result in results {
         let title = format!("{} day {:#2}", result.year, result.day);
         println!(
-            " <=============>  {}  <=============>",
+            " <=============> {: ^13} <=============>",
             style(title).bold().blue()
         );
 
@@ -79,8 +80,16 @@ fn main() -> std::io::Result<()> {
         } else {
             println!("   {}", style(fst.replace('\n', "\n   ")).green());
             println!("   {}", style(snd.replace('\n', "\n   ")).red());
-            println!();
         }
+
+        let duration = format!("{:.2?}", result.duration);
+        println!(
+            " <=============> {: ^13} <=============>",
+            style(duration).bold().blue()
+        );
+
+        println!();
+        println!();
     }
 
     let footer = format!("Executed {} challanges in {:.2?}", count, time);
