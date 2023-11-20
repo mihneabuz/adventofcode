@@ -25,7 +25,9 @@ dependencies = [
  "clap",
  "config",
  "console",
+ "lazy_static",
  "oneshot",
+ "regex",
  "reqwest",
 ]
 

@@ -1,6 +1,41 @@
+use lib::aoc;
+use lib::challenge::Challenge;
+
 use std::cmp::Ordering;
-use std::fs;
 use std::str;
+
+pub struct Day13;
+
+impl Challenge for Day13 {
+    aoc!(year = 2022, day = 13);
+
+    fn solve(input: String) -> (String, String) {
+        let mut lists = input.split_whitespace().map(parse_list).collect::<Vec<_>>();
+
+        let res1 = lists
+            .chunks(2)
+            .map(|l| compare_lists(&l[0], &l[1]) == Ordering::Less)
+            .enumerate()
+            .filter(|(_, b)| *b)
+            .fold(0, |acc, (i, _)| acc + i + 1);
+
+        lists.sort_by(compare_lists);
+
+        let div1 = NestedList::List(vec![NestedList::List(vec![NestedList::Item(2)])]);
+        let idx1 = lists
+            .binary_search_by(|l| compare_lists(l, &div1))
+            .unwrap_err();
+        lists.insert(idx1, div1);
+
+        let div2 = NestedList::List(vec![NestedList::List(vec![NestedList::Item(6)])]);
+        let idx2 = lists
+            .binary_search_by(|l| compare_lists(l, &div2))
+            .unwrap_err();
+        lists.insert(idx2, div2);
+
+        (res1.to_string(), ((idx1 + 1) * (idx2 + 1)).to_string())
+    }
+}
 
 #[derive(Clone)]
 enum NestedList<T> {
@@ -81,36 +116,4 @@ fn compare_lists(l1: &NestedList<i64>, l2: &NestedList<i64>) -> Ordering {
             }
         }
     }
-}
-
-fn main() {
-    let content = fs::read_to_string("input").unwrap();
-    let mut lists = content
-        .split_whitespace()
-        .map(parse_list)
-        .collect::<Vec<_>>();
-
-    let res1 = lists
-        .chunks(2)
-        .map(|l| compare_lists(&l[0], &l[1]) == Ordering::Less)
-        .enumerate()
-        .filter(|(_, b)| *b)
-        .fold(0, |acc, (i, _)| acc + i + 1);
-
-    lists.sort_by(compare_lists);
-
-    let div1 = NestedList::List(vec![NestedList::List(vec![NestedList::Item(2)])]);
-    let idx1 = lists
-        .binary_search_by(|l| compare_lists(l, &div1))
-        .unwrap_err();
-    lists.insert(idx1, div1);
-
-    let div2 = NestedList::List(vec![NestedList::List(vec![NestedList::Item(6)])]);
-    let idx2 = lists
-        .binary_search_by(|l| compare_lists(l, &div2))
-        .unwrap_err();
-    lists.insert(idx2, div2);
-
-    println!("1: {}", res1);
-    println!("1: {}", (idx1 + 1) * (idx2 + 1));
 }

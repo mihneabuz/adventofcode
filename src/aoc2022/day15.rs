@@ -1,4 +1,5 @@
-use std::fs;
+use lib::aoc;
+use lib::challenge::Challenge;
 
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -7,6 +8,64 @@ type Point = (i32, i32);
 struct Sensor {
     pos: Point,
     beacon: Point,
+}
+
+pub struct Day15;
+
+impl Challenge for Day15 {
+    aoc!(year = 2022, day = 15);
+
+    fn solve(input: String) -> (String, String) {
+        let lines = input.lines();
+
+        let row = 2000000;
+        let max = 4000000;
+        let sensors = lines.map(parse_sensor).collect::<Vec<_>>();
+
+        let mut beacons = sensors
+            .iter()
+            .filter(|s| s.beacon.1 == row)
+            .map(|s| s.beacon.0)
+            .collect::<Vec<_>>();
+        beacons.sort();
+        beacons.dedup();
+
+        let total = sensors
+            .iter()
+            .filter_map(|s| slice_bounds(s, row))
+            .fold(Vec::new(), |mut segments, slice| {
+                add_segment(&mut segments, slice);
+                segments
+            })
+            .iter()
+            .map(|(start, end)| *end - *start + 1)
+            .sum::<i32>();
+
+        let res1 = total - beacons.len() as i32;
+
+        let mut res2 = 0;
+        'outer: for row in 0..=max {
+            let mut segments = Vec::new();
+            sensors
+                .iter()
+                .filter_map(|s| slice_bounds(s, row))
+                .for_each(|slice| add_segment(&mut segments, slice));
+
+            for window in segments.windows(2) {
+                let (prev, curr) = (window[0], window[1]);
+                if curr.0 == prev.1 + 2 && prev.1 < max {
+                    res2 = (prev.1 + 1) as u64 * 4000000 + row as u64;
+                    break 'outer;
+                }
+
+                if curr.1 > max {
+                    break;
+                }
+            }
+        }
+
+        (res1.to_string(), res2.to_string())
+    }
 }
 
 fn parse_sensor(s: &str) -> Sensor {
@@ -64,58 +123,4 @@ fn add_segment(segments: &mut Vec<(i32, i32)>, slice: (i32, i32)) {
     } else {
         segments.insert(i, (slice.0, slice.1 - 1));
     }
-}
-
-fn main() {
-    let content = fs::read_to_string("input").unwrap();
-    let mut lines = content.lines();
-
-    let row = lines.next().unwrap().parse::<i32>().unwrap();
-    let max = lines.next().unwrap().parse::<i32>().unwrap();
-    let sensors = lines.map(parse_sensor).collect::<Vec<_>>();
-
-    let mut beacons = sensors
-        .iter()
-        .filter(|s| s.beacon.1 == row)
-        .map(|s| s.beacon.0)
-        .collect::<Vec<_>>();
-    beacons.sort();
-    beacons.dedup();
-
-    let total = sensors
-        .iter()
-        .filter_map(|s| slice_bounds(s, row))
-        .fold(Vec::new(), |mut segments, slice| {
-            add_segment(&mut segments, slice);
-            segments
-        })
-        .iter()
-        .map(|(start, end)| *end - *start + 1)
-        .sum::<i32>();
-
-    let res1 = total - beacons.len() as i32;
-
-    let mut res2 = 0;
-    'outer: for row in 0..=max {
-        let mut segments = Vec::new();
-        sensors
-            .iter()
-            .filter_map(|s| slice_bounds(s, row))
-            .for_each(|slice| add_segment(&mut segments, slice));
-
-        for window in segments.windows(2) {
-            let (prev, curr) = (window[0], window[1]);
-            if curr.0 == prev.1 + 2 && prev.1 < max {
-                res2 = (prev.1 + 1) as u64 * 4000000 + row as u64;
-                break 'outer
-            }
-
-            if curr.1 > max {
-                break
-            }
-        }
-    }
-
-    println!("1: {}", res1);
-    println!("2: {}", res2);
 }

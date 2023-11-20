@@ -82,8 +82,9 @@ impl Worker {
 
 impl Drop for Worker {
     fn drop(&mut self) {
-        self.sender.send(Task::Exit).unwrap();
-        self.thread.take().unwrap().join().unwrap();
+        if self.sender.send(Task::Exit).is_ok() {
+            self.thread.take().unwrap().join().unwrap();
+        }
     }
 }
 
@@ -100,7 +101,7 @@ impl<T> OwnedHandle<T> {
 
     pub fn join(mut self) -> Option<(Worker, T)> {
         let inner = self.inner.take()?;
-        Some((inner.0, inner.1.recv().unwrap()))
+        Some((inner.0, inner.1.recv().ok()?))
     }
 }
 
@@ -122,19 +123,15 @@ impl<T> RefHandle<'_, T> {
         self.worker
     }
 
-    pub fn join(mut self) -> T {
-        self.signal
-            .take()
-            .unwrap()
-            .recv()
-            .expect("the worker thread died")
+    pub fn join(mut self) -> Option<T> {
+        self.signal.take().unwrap().recv().ok()
     }
 }
 
 impl<T> Drop for RefHandle<'_, T> {
     fn drop(&mut self) {
         if let Some(signal) = self.signal.take() {
-            signal.recv_ref().expect("the worker thread died");
+            let _ = signal.recv_ref();
         }
     }
 }
@@ -213,11 +210,11 @@ mod tests {
 
         let handle = worker.run(|| 1);
 
-        assert_eq!(handle.join(), 1);
+        assert_eq!(handle.join().unwrap(), 1);
 
         let handle = worker.run(|| Some("hello".to_string()));
 
-        assert_eq!(handle.join(), Some("hello".to_string()));
+        assert_eq!(handle.join().unwrap(), Some("hello".to_string()));
     }
 
     #[test]

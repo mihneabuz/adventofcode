@@ -1,12 +1,53 @@
+use lib::aoc;
+use lib::challenge::Challenge;
+
 use std::cmp;
 use std::collections::HashMap;
-use std::fs;
 
 use lazy_static::lazy_static;
 use regex::Regex;
 
 type Graph = Vec<(u32, Vec<usize>)>;
 type Cache = HashMap<(usize, u32, usize), u32>;
+
+pub struct Day16;
+
+impl Challenge for Day16 {
+    aoc!(year = 2022, day = 16);
+
+    fn solve(input: String) -> (String, String) {
+        let valves = input.lines().map(parse_valve).collect::<Vec<_>>();
+        let n = valves.len();
+
+        let mut counter = 0usize;
+        let mut valve_map = HashMap::new();
+
+        let mut graph = vec![(0, Vec::new()); n];
+        for valve in valves {
+            let idx = *valve_map.entry(valve.0).or_insert_with(|| {
+                counter += 1;
+                counter - 1
+            });
+            graph[idx].0 = valve.1;
+
+            for neigh in valve.2 {
+                let neight_idx = *valve_map.entry(neigh).or_insert_with(|| {
+                    counter += 1;
+                    counter - 1
+                });
+                graph[idx].1.push(neight_idx);
+            }
+        }
+
+        // let start = *valve_map.get("AA").unwrap();
+        // let fst = solve(start, 30, &mut Vec::new(), &graph);
+        // let snd = solve_2(start, 26, &mut Vec::new(), &graph);
+        let fst = "Nope";
+        let snd = "Nope";
+
+        (fst.to_string(), snd.to_string())
+    }
+}
 
 fn parse_valve(s: &str) -> (&str, u32, Vec<&str>) {
     lazy_static! {
@@ -52,10 +93,7 @@ fn _solve(idx: usize, time: u32, opened: &mut Vec<usize>, graph: &Graph, cache: 
     }
 
     for neigh in node.1.iter().copied() {
-        best = cmp::max(
-            best,
-            _solve(neigh, time - 1, opened, graph, cache),
-        );
+        best = cmp::max(best, _solve(neigh, time - 1, opened, graph, cache));
     }
 
     cache.insert(entry, best);
@@ -68,7 +106,14 @@ fn solve(idx: usize, time_remaining: u32, opened: &mut Vec<usize>, graph: &Graph
     _solve(idx, time_remaining, opened, graph, &mut cache)
 }
 
-fn _solve_2(idx1: usize, idx2: usize, time: u32, opened: &mut Vec<usize>, graph: &Graph, cache: &mut Cache) -> u32 {
+fn _solve_2(
+    idx1: usize,
+    idx2: usize,
+    time: u32,
+    opened: &mut Vec<usize>,
+    graph: &Graph,
+    cache: &mut Cache,
+) -> u32 {
     if time == 0 {
         return 0;
     }
@@ -84,7 +129,8 @@ fn _solve_2(idx1: usize, idx2: usize, time: u32, opened: &mut Vec<usize>, graph:
     let mut best = 0;
 
     let has_valve1 = node1.0 > 0 && opened.iter().copied().find(|&i| i == idx1).is_none();
-    let has_valve2 = idx1 != idx2 && node2.0 > 0 && opened.iter().copied().find(|&i| i == idx2).is_none();
+    let has_valve2 =
+        idx1 != idx2 && node2.0 > 0 && opened.iter().copied().find(|&i| i == idx2).is_none();
 
     if has_valve1 && has_valve2 {
         opened.push(idx2);
@@ -121,7 +167,10 @@ fn _solve_2(idx1: usize, idx2: usize, time: u32, opened: &mut Vec<usize>, graph:
 
     for neigh1 in node1.1.iter().copied() {
         for neigh2 in node2.1.iter().copied() {
-            best = cmp::max(best, _solve_2(neigh1, neigh2, time - 1, opened, graph, cache));
+            best = cmp::max(
+                best,
+                _solve_2(neigh1, neigh2, time - 1, opened, graph, cache),
+            );
         }
     }
 
@@ -133,28 +182,4 @@ fn _solve_2(idx1: usize, idx2: usize, time: u32, opened: &mut Vec<usize>, graph:
 fn solve_2(idx: usize, time_remaining: u32, opened: &mut Vec<usize>, graph: &Graph) -> u32 {
     let mut cache = HashMap::new();
     _solve_2(idx, idx, time_remaining, opened, graph, &mut cache)
-}
-
-fn main() {
-    let content = fs::read_to_string("example").unwrap();
-    let valves = content.lines().map(parse_valve).collect::<Vec<_>>();
-    let n = valves.len();
-
-    let mut counter = 0usize;
-    let mut valve_map = HashMap::new();
-
-    let mut graph = vec![(0, Vec::new()); n];
-    for valve in valves {
-        let idx = *valve_map.entry(valve.0).or_insert_with(||{counter += 1; counter - 1});
-        graph[idx].0 = valve.1;
-
-        for neigh in valve.2 {
-            let neight_idx = *valve_map.entry(neigh).or_insert_with(||{counter += 1; counter - 1});
-            graph[idx].1.push(neight_idx);
-        }
-    }
-
-    let start = *valve_map.get("AA").unwrap();
-    println!("1: {:?}", solve(start, 30, &mut Vec::new(), &graph));
-    println!("2: {:?}", solve_2(start, 26, &mut Vec::new(), &graph));
 }

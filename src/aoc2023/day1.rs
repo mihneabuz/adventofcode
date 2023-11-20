@@ -38,7 +38,10 @@ impl ThreadedChallenge for ThreadedTest {
             handles.push(handle);
         }
 
-        let total = handles.into_iter().map(|h| h.join()).sum::<usize>();
+        let total = handles
+            .into_iter()
+            .map(|h| h.join().unwrap())
+            .sum::<usize>();
 
         (input, total.to_string())
     }

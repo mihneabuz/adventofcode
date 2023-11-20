@@ -89,10 +89,11 @@ impl AocExecutor {
 
     fn join_all(&mut self) {
         for handle in self.scheduled.drain(..) {
-            let (main_worker, (result, extra_workers)) = handle.join().unwrap();
-            self.results.push(result);
-            self.worker_group
-                .extend(Some(main_worker).into_iter().chain(extra_workers));
+            if let Some((main_worker, (result, extra_workers))) = handle.join() {
+                self.results.push(result);
+                self.worker_group
+                    .extend(Some(main_worker).into_iter().chain(extra_workers));
+            }
         }
     }
 }
