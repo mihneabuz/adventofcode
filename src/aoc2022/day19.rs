@@ -15,7 +15,7 @@ impl Challenge for Day19 {
         let res1 = blueprints
             .iter()
             .enumerate()
-            .map(|(i, bp)| (i + 1) * solve(24, 2000, bp))
+            .map(|(i, bp)| (i + 1) * solve(24, 1000, bp))
             .sum::<usize>();
 
         let res2 = blueprints

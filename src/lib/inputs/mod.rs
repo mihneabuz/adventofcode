@@ -67,10 +67,7 @@ impl AocInputs {
         }
 
         if let Some(downloader) = self.downloader.as_mut() {
-            println!(
-                "Downloading input for {} day {}...",
-                challenge.year, challenge.day
-            );
+            println!("Downloading input for {} day {}...", challenge.year, challenge.day);
 
             let url = format!(
                 "https://adventofcode.com/{}/day/{}/input",

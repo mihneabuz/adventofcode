@@ -5,7 +5,11 @@ use std::time;
 
 use clap::Parser;
 use console::style;
-use lib::{challenge::ChallengeObject, executor::AocExecutor, inputs::AocInputs};
+use lib::{
+    challenge::{ChallengeObject, ChallengeResult},
+    executor::AocExecutor,
+    inputs::AocInputs,
+};
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -45,11 +49,10 @@ fn main() -> std::io::Result<()> {
 
     let count = challenges.len();
 
-    AocInputs::new(args.inputs_cache.unwrap_or("cache".into()), args.download)?
-        .get_inputs(&mut challenges)?;
+    AocInputs::new(args.inputs_cache.unwrap_or("cache".into()), args.download)?.get_inputs(&mut challenges)?;
 
     let header = format!("Running {} challenges", count);
-    println!("\n   {: ^42}", style(header).bold().green());
+    println!("\n {}", style(header).bold().green());
 
     let mut executor = match args.worker_threads {
         Some(workers) => AocExecutor::with_workers(workers),
@@ -66,42 +69,47 @@ fn main() -> std::io::Result<()> {
 
     println!();
 
-    results.sort_by_key(|r| r.year * 10 + r.day);
-    for result in results {
-        let title = format!("{} day {:#2}", result.year, result.day);
-        println!(
-            " <=============> {: ^13} <=============>",
-            style(title).bold().blue()
-        );
-
-        if let Some((example1, example2)) = result.example {
-            println!(
-                "   example: {} {}",
-                style(example1).green(),
-                style(example2).red()
-            );
-        }
-
-        let (fst, snd) = result.solution;
-        if !fst.contains('\n') && !snd.contains('\n') {
-            println!("   {:#29} {}", style(fst).green(), style(snd).red());
-        } else {
-            println!("   {}", style(fst.replace('\n', "\n   ")).green());
-            println!("   {}", style(snd.replace('\n', "\n   ")).red());
-        }
-
-        let duration = format!("{:.2?}", result.duration);
-        println!(
-            " <=============> {: ^13} <=============>",
-            style(duration).bold().blue()
-        );
-
-        println!();
-        println!();
-    }
+    results.sort_by_key(|r| (r.year, r.day));
+    show_results(&results);
 
     let footer = format!("Executed {} challanges in {:.2?}", count, time);
-    println!("\n   {: ^42}", style(footer).bold().green());
+    println!("\n {}", style(footer).bold().green());
 
     Ok(())
+}
+
+fn show_results(results: &[ChallengeResult]) {
+    use prettytable::{Cell, Row, Table};
+
+    if let Some(result) = results.iter().find(|r| r.example.is_some()) {
+        let solution = result.example.as_ref().unwrap();
+        println!("Example: {} {}", solution.0, solution.1);
+    }
+
+    let mut table = Table::new();
+
+    let header = ["Year", "Day", "Part 1", "Part 2", "Time"]
+        .iter()
+        .map(|name| style(name).red().bold().to_string())
+        .collect::<Vec<_>>();
+
+    table.add_row(Row::new(header.iter().map(|name| Cell::new(name)).collect()));
+
+    let longest = results.iter().map(|r| r.duration).max().unwrap().as_micros().ilog2();
+
+    for result in results {
+        let duration = result.duration.as_micros().ilog2();
+        let rel_duration = String::from("█").repeat((duration * 10 / longest) as usize);
+
+        table.add_row(prettytable::row![
+            style(format!("{:?}", result.year)).blue(),
+            style(format!("{:?}", result.day)).green(),
+            result.solution.0,
+            result.solution.1,
+            style(format!("{:.2?}", result.duration)).yellow(),
+            style(format!("{}", rel_duration)).red(),
+        ]);
+    }
+
+    table.printstd();
 }

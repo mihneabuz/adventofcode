@@ -20,11 +20,7 @@ impl FileCache {
         fs::read_to_string(path)
     }
 
-    pub fn set(
-        &self,
-        file: impl Into<path::PathBuf>,
-        contents: impl AsRef<[u8]>,
-    ) -> io::Result<()> {
+    pub fn set(&self, file: impl Into<path::PathBuf>, contents: impl AsRef<[u8]>) -> io::Result<()> {
         let path = self.root.join(file.into());
         fs::write(path, contents)
     }

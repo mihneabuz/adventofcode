@@ -70,10 +70,8 @@ impl Challenge for Day15 {
 
 fn parse_sensor(s: &str) -> Sensor {
     lazy_static! {
-        static ref RE: Regex = Regex::new(
-            r"Sensor at x=(-?\d+), y=(-?\d+): closest beacon is at x=(-?\d+), y=(-?\d+)"
-        )
-        .unwrap();
+        static ref RE: Regex =
+            Regex::new(r"Sensor at x=(-?\d+), y=(-?\d+): closest beacon is at x=(-?\d+), y=(-?\d+)").unwrap();
     }
 
     let cap = RE.captures(s).unwrap();
