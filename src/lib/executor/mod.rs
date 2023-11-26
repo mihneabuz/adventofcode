@@ -55,7 +55,11 @@ impl AocExecutor {
         let notifier = self.notifier.clone();
         let handle = workers.take_one().unwrap().run_owned(move || {
             let result = challenge.solve(&mut workers);
-            notifier.signal();
+
+            let _guard = scopeguard::guard(notifier, |notifier| {
+                notifier.signal();
+            });
+
             (result, workers)
         });
 
