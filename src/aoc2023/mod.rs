@@ -1,7 +1,7 @@
-use lib::challenge::ChallengeObject;
+use lib::challenge::{ChallengeObject, ThreadedChallenge};
 
 automod::dir!(pub "src/aoc2023");
 
 pub fn challenges() -> Vec<ChallengeObject> {
-    vec![]
+    vec![day1::Day1::into_obj()]
 }
