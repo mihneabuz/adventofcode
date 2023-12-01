@@ -45,6 +45,11 @@ fn main() -> std::io::Result<()> {
         challenges.retain(|c| c.day == day);
     }
 
+    if challenges.is_empty() {
+        println!("No challenges to run.");
+        return Ok(());
+    }
+
     challenges.sort_by_key(|c| c.year * 10 + c.day);
 
     let count = challenges.len();
@@ -99,7 +104,7 @@ fn show_results(results: &[ChallengeResult]) {
 
     for result in results {
         let duration = result.duration.as_micros().ilog2();
-        let rel_duration = String::from("█").repeat((duration * 10 / longest) as usize);
+        let rel_duration = String::from("█").repeat((duration * 10 / longest.max(0)) as usize);
 
         table.add_row(prettytable::row![
             style(format!("{:?}", result.year)).blue(),
