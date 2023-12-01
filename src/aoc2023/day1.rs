@@ -1,3 +1,4 @@
+use lib::helpers::Trie;
 use lib::{aoc, challenge::Challenge};
 
 pub struct Day1;
@@ -28,30 +29,36 @@ impl Challenge for Day1 {
             ("nine", 9),
         ];
 
+        let mut trie: Trie<u32, 256> = Trie::new();
+        for (path, value) in digits.iter().copied() {
+            trie.add(path.chars().map(|c| c as usize), value);
+        }
+
+        let mut rev_trie: Trie<u32, 256> = Trie::new();
+        for (path, value) in digits.iter().copied() {
+            rev_trie.add(path.chars().rev().map(|c| c as usize), value);
+        }
+
         let snd: usize = input
             .lines()
             .map(|line| {
-                let x = prefixes(line)
+                let x = (0..line.len())
+                    .map(|i| &line[i..])
                     .find_map(|prefix| {
-                        for (text, value) in digits.iter().copied() {
-                            if prefix.ends_with(text) {
-                                return Some(value);
-                            }
-                        }
-
-                        prefix.chars().last().and_then(|c| c.to_digit(10))
+                        trie.first_match(prefix.chars().map(|c| c as usize))
+                            .copied()
+                            .or_else(|| prefix.chars().nth(0).unwrap().to_digit(10))
                     })
                     .unwrap();
 
-                let y = suffixes(line)
+                let y = (1..line.len() + 1)
+                    .rev()
+                    .map(|i| &line[0..i])
                     .find_map(|suffix| {
-                        for (text, value) in digits.iter().copied() {
-                            if suffix.starts_with(text) {
-                                return Some(value);
-                            }
-                        }
-
-                        suffix.chars().next().and_then(|c| c.to_digit(10))
+                        rev_trie
+                            .first_match(suffix.chars().rev().map(|c| c as usize))
+                            .copied()
+                            .or_else(|| suffix.chars().last().unwrap().to_digit(10))
                     })
                     .unwrap();
 
@@ -61,12 +68,4 @@ impl Challenge for Day1 {
 
         (fst.to_string(), snd.to_string())
     }
-}
-
-fn prefixes(line: &str) -> impl Iterator<Item = &str> {
-    (1..line.len() + 1).map(|i| &line[0..i])
-}
-
-fn suffixes(line: &str) -> impl Iterator<Item = &str> {
-    (0..line.len()).rev().map(|i| &line[i..line.len()])
 }

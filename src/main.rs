@@ -112,7 +112,7 @@ fn show_results(results: &[ChallengeResult]) {
             result.solution.0,
             result.solution.1,
             style(format!("{:.2?}", result.duration)).yellow(),
-            style(format!("{}", rel_duration)).red(),
+            style(rel_duration.to_string()).red(),
         ]);
     }
 
