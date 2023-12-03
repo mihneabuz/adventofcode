@@ -2,7 +2,8 @@ use std::time::{self, Duration};
 
 use crate::executor::WorkerGroup;
 
-type Solver = Box<dyn Fn(String, &mut WorkerGroup) -> ((String, String), Duration) + Send + 'static>;
+type Solver =
+    Box<dyn Fn(String, &mut WorkerGroup) -> ((String, String), Duration) + Send + 'static>;
 
 pub trait Challenge {
     fn year() -> usize;
@@ -85,7 +86,9 @@ pub struct ChallengeResult {
 
 impl ChallengeObject {
     pub fn solve(self, workers: &mut WorkerGroup) -> ChallengeResult {
-        let example = self.example.map(|input| (self.solve)(input.to_string(), workers).0);
+        let example = self
+            .example
+            .map(|input| (self.solve)(input.to_string(), workers).0);
         let (solution, duration) = (self.solve)(self.input, workers);
 
         ChallengeResult {

@@ -13,7 +13,9 @@ pub struct TrieInner<T, const L: usize> {
 
 impl<T, const L: usize> Trie<T, L> {
     pub fn new() -> Self {
-        Self { root: TrieInner::new() }
+        Self {
+            root: TrieInner::new(),
+        }
     }
 
     pub fn add<I, V>(&mut self, path: I, item: T)
@@ -37,7 +39,8 @@ impl<T, const L: usize> Trie<T, L> {
         I: IntoIterator<Item = V>,
         V: Into<usize>,
     {
-        self.root.first_match(path.into_iter().map(|idx| idx.into()))
+        self.root
+            .first_match(path.into_iter().map(|idx| idx.into()))
     }
 }
 
@@ -58,7 +61,9 @@ impl<T, const L: usize> TrieInner<T, L> {
     pub fn add(&mut self, mut path: impl Iterator<Item = usize>, item: T) {
         match path.next() {
             Some(i) => {
-                self.next[i].get_or_insert(Box::new(TrieInner::new())).add(path, item);
+                self.next[i]
+                    .get_or_insert(Box::new(TrieInner::new()))
+                    .add(path, item);
             }
 
             None => {
@@ -80,7 +85,9 @@ impl<T, const L: usize> TrieInner<T, L> {
         }
 
         match path.next() {
-            Some(i) => self.next[i].as_ref().and_then(|next| next.first_match(path)),
+            Some(i) => self.next[i]
+                .as_ref()
+                .and_then(|next| next.first_match(path)),
             None => self.value.as_ref(),
         }
     }

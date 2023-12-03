@@ -28,13 +28,22 @@ where
 
 impl<T> Map<T> {
     const D4: Dirs = &[(1, 0), (0, 1), (-1, 0), (0, -1)];
-    const D8: Dirs = &[(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)];
+    const D8: Dirs = &[
+        (-1, -1),
+        (-1, 0),
+        (-1, 1),
+        (0, -1),
+        (0, 1),
+        (1, -1),
+        (1, 0),
+        (1, 1),
+    ];
 
     pub fn from_vecs(map: Vec<Vec<T>>) -> Self {
         Self { inner: map }
     }
 
-    pub fn from_iter<R, C>(iter: R) -> Self
+    pub fn from_iterator<R, C>(iter: R) -> Self
     where
         R: Iterator<Item = C>,
         C: Iterator<Item = T>,

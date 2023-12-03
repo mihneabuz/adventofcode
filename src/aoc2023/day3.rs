@@ -6,7 +6,7 @@ impl Challenge for Day3 {
     aoc!(year = 2023, day = 3);
 
     fn solve(input: String) -> (String, String) {
-        let map = Map::from_iter(input.lines().map(|l| l.as_bytes().iter().copied()));
+        let map = Map::from_iterator(input.lines().map(|l| l.as_bytes().iter().copied()));
 
         let (mut fst, mut snd) = (0, 0);
         for ((i, j), &cell) in map.cells() {
@@ -60,5 +60,9 @@ fn expand(row: &[u8], j: usize) -> (usize, usize) {
 }
 
 fn parse(bytes: &[u8]) -> usize {
-    unsafe { String::from_utf8_lossy(bytes).parse::<usize>().unwrap_unchecked() }
+    unsafe {
+        String::from_utf8_lossy(bytes)
+            .parse::<usize>()
+            .unwrap_unchecked()
+    }
 }

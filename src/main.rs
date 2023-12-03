@@ -54,7 +54,8 @@ fn main() -> std::io::Result<()> {
 
     let count = challenges.len();
 
-    AocInputs::new(args.inputs_cache.unwrap_or("cache".into()), args.download)?.get_inputs(&mut challenges)?;
+    AocInputs::new(args.inputs_cache.unwrap_or("cache".into()), args.download)?
+        .get_inputs(&mut challenges)?;
 
     let header = format!("Running {} challenges", count);
     println!("\n {}", style(header).bold().green());
@@ -98,9 +99,17 @@ fn show_results(results: &[ChallengeResult]) {
         .map(|name| style(name).red().bold().to_string())
         .collect::<Vec<_>>();
 
-    table.add_row(Row::new(header.iter().map(|name| Cell::new(name)).collect()));
+    table.add_row(Row::new(
+        header.iter().map(|name| Cell::new(name)).collect(),
+    ));
 
-    let longest = results.iter().map(|r| r.duration).max().unwrap().as_micros().ilog2();
+    let longest = results
+        .iter()
+        .map(|r| r.duration)
+        .max()
+        .unwrap()
+        .as_micros()
+        .ilog2();
 
     for result in results {
         let duration = result.duration.as_micros().ilog2();
