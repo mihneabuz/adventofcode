@@ -1,6 +1,10 @@
 use std::collections::VecDeque;
 
-use lib::{aoc, challenge::Challenge, helpers::Bitmap};
+use lib::{
+    aoc,
+    challenge::Challenge,
+    helpers::{unchecked_parse, Bitmap},
+};
 
 pub struct Day4;
 
@@ -13,7 +17,7 @@ impl Challenge for Day4 {
 
         input
             .lines()
-            .map(|l| parse(l.split_once(": ").unwrap().1))
+            .map(|l| parse_line(l.split_once(": ").unwrap().1))
             .for_each(|(winning, guess)| {
                 let count = winning.intersect(guess).count_bits() as usize;
 
@@ -36,17 +40,17 @@ impl Challenge for Day4 {
     }
 }
 
-fn parse(line: &str) -> (Bitmap<u128>, Bitmap<u128>) {
+fn parse_line(line: &str) -> (Bitmap<u128>, Bitmap<u128>) {
     let (winning_str, guess_str) = line.split_once(" | ").unwrap();
 
     let winning: Bitmap<u128> = winning_str
         .split_whitespace()
-        .map(|n| n.parse::<usize>().unwrap())
+        .map(unchecked_parse::<usize>)
         .fold(Bitmap::new(), |acc, num| acc.set(num));
 
     let guess: Bitmap<u128> = guess_str
         .split_whitespace()
-        .map(|n| n.parse::<usize>().unwrap())
+        .map(unchecked_parse::<usize>)
         .fold(Bitmap::new(), |acc, num| acc.set(num));
 
     (winning, guess)

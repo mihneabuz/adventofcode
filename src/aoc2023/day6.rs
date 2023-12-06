@@ -1,7 +1,7 @@
 use itertools::Itertools;
 use num::integer::Roots;
 
-use lib::{aoc, challenge::Challenge};
+use lib::{aoc, challenge::Challenge, helpers::unchecked_parse};
 
 pub struct Day6;
 
@@ -14,7 +14,7 @@ impl Challenge for Day6 {
             .map(|line| {
                 line.split_whitespace()
                     .skip(1)
-                    .map(|s| s.parse::<isize>().unwrap())
+                    .map(unchecked_parse::<isize>)
                     .collect_vec()
             })
             .collect_tuple()
@@ -29,7 +29,7 @@ impl Challenge for Day6 {
             .map(|line| {
                 line.split_whitespace()
                     .skip(1)
-                    .fold(String::new(), |acc, s| acc + &s)
+                    .fold(String::new(), |acc, s| acc + s)
                     .parse::<isize>()
                     .unwrap()
             })

@@ -1,48 +1,15 @@
-use std::{cmp::Ordering, str::FromStr};
-
 use itertools::Itertools;
-use lib::{aoc, challenge::Challenge, example};
+use lib::{
+    aoc,
+    challenge::Challenge,
+    helpers::{unchecked_parse, Segment, SegmentSequence},
+};
 
 pub struct Day5;
 
 impl Challenge for Day5 {
     aoc!(year = 2023, day = 5);
 
-    example!(
-        "seeds: 79 14 55 13
-
-seed-to-soil map:
-50 98 2
-52 50 48
-
-soil-to-fertilizer map:
-0 15 37
-37 52 2
-39 0 15
-
-fertilizer-to-water map:
-49 53 8
-0 11 42
-42 0 7
-57 7 4
-
-water-to-light map:
-88 18 7
-18 25 70
-
-light-to-temperature map:
-45 77 23
-81 45 19
-68 64 13
-
-temperature-to-humidity map:
-0 69 1
-1 0 69
-
-humidity-to-location map:
-60 56 37
-56 93 4"
-    );
     fn solve(input: String) -> (String, String) {
         let mut input = input.split("\n\n");
 
@@ -53,88 +20,69 @@ humidity-to-location map:
             .unwrap()
             .1
             .split_whitespace()
-            .map(|n| n.parse::<isize>().unwrap())
+            .map(unchecked_parse::<isize>)
             .collect_vec();
 
-        let maps = input
+        let map = input
             .map(|m| {
-                m.lines()
-                    .skip(1)
-                    .map(|line| {
-                        line.split_whitespace()
-                            .map(parse::<isize>)
-                            .collect_tuple::<(_, _, _)>()
-                            .unwrap()
-                    })
-                    .sorted_by_key(|s| s.1)
-                    .collect_vec()
-            })
-            .collect_vec();
+                SegmentSequence::from_iterator(m.lines().skip(1).map(|line| {
+                    let (dst, src, len) = line
+                        .split_whitespace()
+                        .map(unchecked_parse::<usize>)
+                        .collect_tuple::<(_, _, _)>()
+                        .unwrap();
 
-        // if seeds.len() > 5 {
-        //     return ("".into(), "".into());
-        // }
+                    let delta = dst as isize - src as isize;
+
+                    Segment::new(src, src + len, delta).unwrap()
+                }))
+                .unwrap()
+            })
+            .reduce(merge)
+            .unwrap();
 
         let fst = seeds
             .iter()
             .copied()
-            .map(|seed| maps.iter().fold(seed, |seed, map| next_seed(seed, map)))
+            .map(|seed| {
+                map.search(seed as usize)
+                    .map(|seg| seg.value + seed)
+                    .unwrap_or(seed)
+            })
             .min()
             .unwrap();
 
         let snd = seeds
-            .chunks_exact(2)
-            .flat_map(|s| s[0]..s[0] + s[1])
-            .map(|seed| maps.iter().fold(seed, |seed, map| next_seed(seed, map)))
+            .chunks(2)
+            .map(|s| {
+                map.range(s[0] as usize, (s[0] + s[1]) as usize)
+                    .map(|seg| seg.lo as isize + seg.value.unwrap_or(0))
+                    .min()
+                    .unwrap()
+            })
             .min()
             .unwrap();
-
-        // let last = maps[maps.len() - 1].clone();
-        // let before_last = maps[maps.len() - 2].clone();
-        // println!("{:?}", before_last);
-        // println!("{:?}", last);
-        // println!();
-        // println!("{:?}", merge(before_last, last));
 
         (fst.to_string(), snd.to_string())
     }
 }
 
-fn find_seg(map: &[(isize, isize, isize)], point: isize) -> Result<usize, usize> {
-    map.binary_search_by(|seg| {
-        let (lo, hi) = (seg.1, seg.1 + seg.2);
-        match (point >= lo, point < hi) {
-            (true, true) => Ordering::Equal,
-            (false, _) => Ordering::Greater,
-            (true, _) => Ordering::Less,
+fn merge(front: SegmentSequence<isize>, back: SegmentSequence<isize>) -> SegmentSequence<isize> {
+    let mut acc = Vec::new();
+
+    for seg in front.range(0, usize::MAX) {
+        let value = seg.value.unwrap_or(0);
+        let map_lo = (seg.lo as isize + value) as usize;
+        let map_hi = (seg.hi as isize + value) as usize;
+
+        for overlap in back.range(map_lo, map_hi) {
+            let unmaped_lo = (overlap.lo as isize - value) as usize;
+            let unmaped_hi = (overlap.hi as isize - value) as usize;
+            acc.push(
+                Segment::new(unmaped_lo, unmaped_hi, overlap.value.unwrap_or(0) + value).unwrap(),
+            );
         }
-    })
-}
-
-fn next_seed(seed: isize, map: &[(isize, isize, isize)]) -> isize {
-    find_seg(map, seed)
-        .map(|pos| map[pos].0 + seed - map[pos].1)
-        .unwrap_or(seed)
-}
-
-fn merge(
-    new: Vec<(isize, isize, isize)>,
-    old: Vec<(isize, isize, isize)>,
-) -> Vec<(isize, isize, isize)> {
-    let result = Vec::new();
-
-    for seg in new {
-        let first = find_seg(&old, seg.0);
-        let last = find_seg(&old, seg.0 + seg.2);
-        println!("> {:?}   {:?} - {:?}", seg, first, last);
     }
 
-    result
-}
-
-fn parse<T>(s: &str) -> T
-where
-    T: FromStr,
-{
-    s.parse::<T>().ok().unwrap()
+    SegmentSequence::from_iterator(acc.into_iter()).unwrap()
 }
