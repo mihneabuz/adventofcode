@@ -1,11 +1,10 @@
-use std::collections::HashMap;
-
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use num::Integer;
 use regex::Regex;
+use smallvec::SmallVec;
 
-use lib::{aoc, challenge::Challenge};
+use lib::{aoc, challenge::Challenge, helpers::Trie};
 
 pub struct Day8;
 
@@ -34,7 +33,7 @@ impl Challenge for Day8 {
             .nodes()
             .filter(|k| k.ends_with('A'))
             .map(|mut node| {
-                let cycle = steps
+                let cycle: SmallVec<[usize; 2]> = steps
                     .chars()
                     .cycle()
                     .zip(1..)
@@ -44,7 +43,7 @@ impl Challenge for Day8 {
                     })
                     .map(|(_, count)| count)
                     .take(2)
-                    .collect_vec();
+                    .collect();
 
                 cycle[1] - cycle[0]
             })
@@ -56,22 +55,29 @@ impl Challenge for Day8 {
 }
 
 struct Map<'a> {
-    inner: HashMap<&'a str, (&'a str, &'a str)>,
+    nodes: Vec<&'a str>,
+    trie: Trie<(&'a str, &'a str), 26>,
 }
 
 impl<'a> Map<'a> {
     fn from_iterator(iter: impl Iterator<Item = (&'a str, (&'a str, &'a str))>) -> Self {
-        Self {
-            inner: iter.collect(),
+        let mut nodes = Vec::new();
+        let mut trie = Trie::new();
+
+        for (k, v) in iter {
+            nodes.push(k);
+            trie.add(k.chars().map(|c| c as u8 - b'A'), v);
         }
+
+        Self { nodes, trie }
     }
 
     fn nodes(&self) -> impl Iterator<Item = &str> {
-        self.inner.keys().copied()
+        self.nodes.iter().copied()
     }
 
     fn step(&self, from: &str, dir: char) -> &str {
-        let adj = self.inner.get(from).unwrap();
+        let adj = self.trie.get(from.chars().map(|c| c as u8 - b'A')).unwrap();
         match dir {
             'L' => adj.0,
             'R' => adj.1,

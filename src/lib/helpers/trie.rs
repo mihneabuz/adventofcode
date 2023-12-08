@@ -26,7 +26,7 @@ impl<T, const L: usize> Trie<T, L> {
         self.root.add(path.into_iter().map(|idx| idx.into()), item);
     }
 
-    pub fn get<I, V>(&mut self, path: I) -> Option<&T>
+    pub fn get<I, V>(&self, path: I) -> Option<&T>
     where
         I: IntoIterator<Item = V>,
         V: Into<usize>,
