@@ -2,7 +2,6 @@ use itertools::Itertools;
 use lazy_static::lazy_static;
 use num::Integer;
 use regex::Regex;
-use smallvec::SmallVec;
 
 use lib::{aoc, challenge::Challenge, helpers::Trie};
 
@@ -33,19 +32,16 @@ impl Challenge for Day8 {
             .nodes()
             .filter(|k| k.ends_with('A'))
             .map(|mut node| {
-                let cycle: SmallVec<[usize; 2]> = steps
+                steps
                     .chars()
                     .cycle()
                     .zip(1..)
-                    .filter(|(step, count)| {
-                        node = map.step(node, *step);
+                    .find(|&(step, count)| {
+                        node = map.step(node, step);
                         node.ends_with('Z') && count % steps.len() == 0
                     })
                     .map(|(_, count)| count)
-                    .take(2)
-                    .collect();
-
-                cycle[1] - cycle[0]
+                    .unwrap()
             })
             .reduce(|acc, count| acc.lcm(&count))
             .unwrap();
