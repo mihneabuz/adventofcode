@@ -1,5 +1,6 @@
 use itertools::Itertools;
 
+#[derive(Clone)]
 pub struct Map<T> {
     inner: Vec<Vec<T>>,
 }
@@ -77,6 +78,10 @@ impl<T> Map<T> {
         self.inner[i][j] = value;
     }
 
+    pub fn replace(&mut self, i: usize, j: usize, value: T) -> T {
+        std::mem::replace(&mut self.inner[i][j], value)
+    }
+
     pub fn row(&self, i: usize) -> &[T] {
         &self.inner[i]
     }
@@ -116,6 +121,40 @@ impl<T> Map<T> {
             k: 0,
         }
     }
+
+    pub fn is_valid(&self, i: isize, j: isize) -> bool {
+        if i < 0 || i >= self.height() as isize {
+            return false;
+        }
+
+        if j < 0 || j >= self.width() as isize {
+            return false;
+        }
+
+        true
+    }
+
+    pub fn on_edge(&self, i: usize, j: usize) -> bool {
+        if i == 0 || i == self.height() - 1 {
+            return true;
+        }
+
+        if j == 0 || j == self.width() - 1 {
+            return true;
+        }
+
+        false
+    }
+
+    pub fn rel_move(&self, pos: (usize, usize), d: (isize, isize)) -> Option<(usize, usize)> {
+        let (i, j) = (pos.0 as isize + d.0, pos.1 as isize + d.1);
+
+        if !self.is_valid(i, j) {
+            return None;
+        }
+
+        Some((i as usize, j as usize))
+    }
 }
 
 type Dirs = &'static [(isize, isize)];
@@ -136,11 +175,7 @@ impl<T> Iterator for Neighbours<'_, T> {
 
         let (i, j) = (self.pos.0 as isize + di, self.pos.1 as isize + dj);
 
-        if i < 0 || i >= self.map.height() as isize {
-            return self.next();
-        }
-
-        if j < 0 || j >= self.map.width() as isize {
+        if !self.map.is_valid(i, j) {
             return self.next();
         }
 
