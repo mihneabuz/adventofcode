@@ -18,11 +18,13 @@ impl Challenge for Day11 {
             })
             .collect_vec();
 
+        let shift = u32::BITS / 2;
+
         let mut rows = [1u64; 256];
         let mut cols = [1u64; 256];
         for &(i, j) in galaxies.iter() {
-            rows[i] = 1 << (u64::BITS / 2);
-            cols[j] = 1 << (u64::BITS / 2);
+            rows[i] = 1 << shift;
+            cols[j] = 1 << shift;
         }
 
         let dists = galaxies
@@ -34,10 +36,7 @@ impl Challenge for Day11 {
             })
             .sum::<u64>();
 
-        let expansion = |exp| {
-            (dists >> (u64::BITS / 2)) as usize
-                + (dists & ((1 << (u64::BITS / 2)) - 1)) as usize * exp
-        };
+        let expansion = |exp| (dists >> shift) + (dists & ((1 << shift) - 1)) * exp;
 
         let fst = expansion(2);
         let snd = expansion(1_000_000);
