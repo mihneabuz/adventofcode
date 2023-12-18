@@ -1,9 +1,9 @@
-mod bitmap;
+mod bitset;
 mod map;
 mod segment;
 mod trie;
 
-pub use bitmap::*;
+pub use bitset::*;
 pub use map::*;
 pub use segment::*;
 pub use trie::*;

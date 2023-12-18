@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use lib::{
     aoc,
     challenge::Challenge,
-    helpers::{unchecked_parse, Bitmap},
+    helpers::{unchecked_parse, Bitset},
 };
 
 pub struct Day4;
@@ -40,18 +40,18 @@ impl Challenge for Day4 {
     }
 }
 
-fn parse_line(line: &str) -> (Bitmap<u128>, Bitmap<u128>) {
+fn parse_line(line: &str) -> (Bitset<u128>, Bitset<u128>) {
     let (winning_str, guess_str) = line.split_once(" | ").unwrap();
 
-    let winning: Bitmap<u128> = winning_str
+    let winning: Bitset<u128> = winning_str
         .split_whitespace()
         .map(unchecked_parse::<usize>)
-        .fold(Bitmap::new(), |acc, num| acc.set(num));
+        .fold(Bitset::new(), |acc, num| acc.set(num));
 
-    let guess: Bitmap<u128> = guess_str
+    let guess: Bitset<u128> = guess_str
         .split_whitespace()
         .map(unchecked_parse::<usize>)
-        .fold(Bitmap::new(), |acc, num| acc.set(num));
+        .fold(Bitset::new(), |acc, num| acc.set(num));
 
     (winning, guess)
 }

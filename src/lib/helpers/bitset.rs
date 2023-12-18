@@ -2,11 +2,12 @@ use std::ops::{BitAnd, BitOr, Shl};
 
 use num::{Integer, PrimInt};
 
-pub struct Bitmap<T> {
+#[derive(Clone, Copy)]
+pub struct Bitset<T> {
     storage: T,
 }
 
-impl<T> Bitmap<T>
+impl<T> Bitset<T>
 where
     T: Copy + Integer + PrimInt,
 {
@@ -50,15 +51,23 @@ where
         }
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.storage == T::zero()
+    }
+
     pub fn count_bits(&self) -> u32
     where
         T: BitAnd<Output = T>,
     {
         self.storage.count_ones()
     }
+
+    pub fn clear(&mut self) {
+        self.storage = T::zero()
+    }
 }
 
-impl<T> Default for Bitmap<T>
+impl<T> Default for Bitset<T>
 where
     T: Copy + Integer + PrimInt,
 {
@@ -69,20 +78,20 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::Bitmap;
+    use super::Bitset;
 
     #[test]
     fn create_bitmap() {
-        let _: Bitmap<u8> = Bitmap::new();
-        let _: Bitmap<u16> = Bitmap::new();
-        let _: Bitmap<u32> = Bitmap::new();
-        let _: Bitmap<u64> = Bitmap::new();
-        let _: Bitmap<u128> = Bitmap::new();
+        let _: Bitset<u8> = Bitset::new();
+        let _: Bitset<u16> = Bitset::new();
+        let _: Bitset<u32> = Bitset::new();
+        let _: Bitset<u64> = Bitset::new();
+        let _: Bitset<u128> = Bitset::new();
     }
 
     #[test]
     fn set_bits() {
-        let mut b: Bitmap<u128> = Bitmap::new();
+        let mut b: Bitset<u128> = Bitset::new();
 
         b = b.set(0);
         b = b.set(1);
@@ -94,7 +103,7 @@ mod tests {
 
     #[test]
     fn get_bits() {
-        let mut b: Bitmap<u128> = Bitmap::new();
+        let mut b: Bitset<u128> = Bitset::new();
 
         b = b.set(7);
         b = b.set(80);
@@ -105,7 +114,7 @@ mod tests {
 
     #[test]
     fn count_bits() {
-        let mut b: Bitmap<u128> = Bitmap::new();
+        let mut b: Bitset<u128> = Bitset::new();
 
         b = b.set(0);
         b = b.set(1);
@@ -117,8 +126,8 @@ mod tests {
 
     #[test]
     fn union() {
-        let mut b1: Bitmap<u128> = Bitmap::new();
-        let mut b2: Bitmap<u128> = Bitmap::new();
+        let mut b1: Bitset<u128> = Bitset::new();
+        let mut b2: Bitset<u128> = Bitset::new();
 
         b1 = b1.set(3);
         b2 = b2.set(7);
@@ -133,8 +142,8 @@ mod tests {
 
     #[test]
     fn intersect() {
-        let mut b1: Bitmap<u128> = Bitmap::new();
-        let mut b2: Bitmap<u128> = Bitmap::new();
+        let mut b1: Bitset<u128> = Bitset::new();
+        let mut b2: Bitset<u128> = Bitset::new();
 
         b1 = b1.set(3);
         b1 = b1.set(7);
