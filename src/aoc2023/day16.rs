@@ -1,8 +1,10 @@
 use itertools::Itertools;
+
 use lib::{aoc, challenge::Challenge, helpers::Bitset};
 
 pub struct Day16;
 
+// TODO: optimize this
 impl Challenge for Day16 {
     aoc!(year = 2023, day = 16);
 
