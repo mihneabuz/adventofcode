@@ -66,7 +66,7 @@ impl<T> Map<T> {
         &self.inner[i][j]
     }
 
-    pub fn get_mut(&mut self, i: usize, j: usize) -> &T {
+    pub fn get_mut(&mut self, i: usize, j: usize) -> &mut T {
         &mut self.inner[i][j]
     }
 
@@ -92,6 +92,10 @@ impl<T> Map<T> {
 
     pub fn row_checked(&self, i: usize) -> Option<&[T]> {
         self.inner.get(i).map(|v| v.as_slice())
+    }
+
+    pub fn rows(&self) -> impl Iterator<Item = (usize, &[T])> {
+        self.inner.iter().map(|r| r.as_slice()).enumerate()
     }
 
     pub fn positions(&self) -> impl Iterator<Item = (usize, usize)> {

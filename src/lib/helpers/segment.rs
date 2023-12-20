@@ -5,8 +5,8 @@ use smallvec::SmallVec;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Segment<T> {
-    pub lo: usize,
-    pub hi: usize,
+    pub lo: isize,
+    pub hi: isize,
     pub value: T,
 }
 
@@ -26,7 +26,7 @@ pub enum Overlap<'a, 'b, T> {
 }
 
 impl<T: Clone> Segment<T> {
-    pub fn new(lo: usize, hi: usize, value: T) -> Option<Self> {
+    pub fn new(lo: isize, hi: isize, value: T) -> Option<Self> {
         if lo > hi {
             return None;
         }
@@ -34,7 +34,7 @@ impl<T: Clone> Segment<T> {
         Some(Self { lo, hi, value })
     }
 
-    pub fn split(self, mid: usize) -> Option<(Self, Self)> {
+    pub fn split(self, mid: isize) -> Option<(Self, Self)> {
         if mid <= self.lo || mid >= self.hi {
             return None;
         }
@@ -86,11 +86,11 @@ impl<T: Clone + PartialEq> SegmentSequence<T> {
         self.inner.iter()
     }
 
-    pub fn search(&self, point: usize) -> Option<&Segment<T>> {
+    pub fn search(&self, point: isize) -> Option<&Segment<T>> {
         self.binary_search(point).ok().map(|idx| &self.inner[idx])
     }
 
-    pub fn range(&self, mut lo: usize, hi: usize) -> impl Iterator<Item = Segment<Option<T>>> {
+    pub fn range(&self, mut lo: isize, hi: isize) -> impl Iterator<Item = Segment<Option<T>>> {
         let mut acc = Vec::new();
 
         let mut idx = match self.binary_search(lo) {
@@ -121,7 +121,7 @@ impl<T: Clone + PartialEq> SegmentSequence<T> {
         acc.into_iter()
     }
 
-    fn binary_search(&self, point: usize) -> Result<usize, usize> {
+    fn binary_search(&self, point: isize) -> Result<usize, usize> {
         self.inner
             .binary_search_by(|seg| match (point >= seg.lo, point < seg.hi) {
                 (true, true) => Ordering::Equal,
@@ -130,7 +130,7 @@ impl<T: Clone + PartialEq> SegmentSequence<T> {
             })
     }
 
-    pub fn insert<F>(&mut self, new: Segment<T>, f: F)
+    pub fn insert<F>(&mut self, new: Segment<T>, f: F) -> bool
     where
         F: Fn(T, T) -> T + Copy,
     {
@@ -139,13 +139,12 @@ impl<T: Clone + PartialEq> SegmentSequence<T> {
                 if let Some(next) = self.inner.get_mut(idx) {
                     if new.hi > next.lo {
                         let (lower, upper) = new.split(next.lo).unwrap();
-                        self.insert(lower, f);
-                        self.insert(upper, f);
-                        return;
+                        return self.insert(lower, f) || self.insert(upper, f);
                     }
                 };
 
                 self.inner.insert(idx, new);
+                false
             }
 
             Ok(idx) => {
@@ -157,6 +156,8 @@ impl<T: Clone + PartialEq> SegmentSequence<T> {
                 } else {
                     self.merge(new, idx, f);
                 }
+
+                true
             }
         }
     }
@@ -192,6 +193,13 @@ impl<T: Clone + PartialEq> SegmentSequence<T> {
         }
 
         self.inner.splice(idx..=idx, replacements);
+    }
+
+    pub fn retain<F>(&mut self, f: F)
+    where
+        F: FnMut(&Segment<T>) -> bool,
+    {
+        self.inner.retain(f)
     }
 
     pub fn simplify(self) -> Self {
@@ -247,7 +255,7 @@ mod tests {
 
         let seg = seg.unwrap();
 
-        assert_eq!(seg.value, 10);
+        assert_eq!(seg.value, 100);
         assert!(seg.clone().split(20).is_none());
 
         let (lower, upper) = seg.split(5).unwrap();
