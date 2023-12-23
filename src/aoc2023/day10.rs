@@ -18,10 +18,7 @@ impl Challenge for Day10 {
         let map = Map::from_slices(&input.lines().map(|line| line.as_bytes()).collect_vec());
         let mut main_pipe = vec![false; map.height() * map.width()];
 
-        let start = map
-            .positions()
-            .find(|&(i, j)| *map.get(i, j) == b'S')
-            .unwrap();
+        let start = map.find(|cell| *cell == b'S').unwrap();
 
         let (mut pos, mut dir) = {
             if matches!(*map.get(start.0 - 1, start.1), b'|' | b'7' | b'F') {

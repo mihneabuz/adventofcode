@@ -159,6 +159,14 @@ impl<T> Map<T> {
 
         Some((i as usize, j as usize))
     }
+
+    pub fn find<F>(&self, predicate: F) -> Option<(usize, usize)>
+    where
+        F: Fn(&T) -> bool,
+    {
+        self.cells()
+            .find_map(|(pos, cell)| predicate(cell).then_some(pos))
+    }
 }
 
 type Dirs = &'static [(isize, isize)];
