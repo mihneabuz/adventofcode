@@ -1,10 +1,11 @@
+use std::mem;
+
 use itertools::Itertools;
 
 use lib::{aoc, challenge::Challenge, helpers::Bitset};
 
 pub struct Day16;
 
-// TODO: optimize this
 impl Challenge for Day16 {
     aoc!(year = 2023, day = 16);
 
@@ -12,27 +13,30 @@ impl Challenge for Day16 {
         let map = input.lines().map(|line| line.as_bytes()).collect_vec();
         let n = map.len();
 
-        let energized = |start: Point| {
+        let energized = move |start: Point| {
             let mut light: Vec<Bitset<u8>> = vec![Bitset::new(); n * n];
 
-            let mut points = vec![start];
+            let (mut points, mut next) = (vec![start], vec![]);
             while !points.is_empty() {
-                points = points
-                    .drain(..)
-                    .flat_map(|p| advance(p, &map, &mut light))
-                    .filter_map(|p| p)
-                    .collect();
+                next.extend(
+                    points
+                        .drain(..)
+                        .flat_map(|p| advance(p, &map, &mut light))
+                        .flatten(),
+                );
+
+                mem::swap(&mut points, &mut next);
             }
 
-            light.iter().filter(|bit| !bit.is_empty()).count()
+            light.into_iter().filter(|set| !set.is_empty()).count()
         };
 
         let fst = energized((0, 0, Dir::Right));
 
-        let top = (0..n).map(|y| (0, y as isize, Dir::Down));
-        let bot = (0..n).map(|y| (n as isize - 1, y as isize, Dir::Up));
-        let lft = (0..n).map(|x| (x as isize, 0, Dir::Right));
-        let rgt = (0..n).map(|x| (x as isize, n as isize - 1, Dir::Left));
+        let top = (0..n).map(|y| (0, y as i32, Dir::Down));
+        let bot = (0..n).map(|y| (n as i32 - 1, y as i32, Dir::Up));
+        let lft = (0..n).map(|x| (x as i32, 0, Dir::Right));
+        let rgt = (0..n).map(|x| (x as i32, n as i32 - 1, Dir::Left));
 
         let snd = top
             .chain(bot)
@@ -55,7 +59,7 @@ enum Dir {
     Right = 4,
 }
 
-type Point = (isize, isize, Dir);
+type Point = (i32, i32, Dir);
 
 fn advance(point: Point, map: &[&[u8]], light: &mut [Bitset<u8>]) -> [Option<Point>; 2] {
     let (x, y, dir) = point;
@@ -64,13 +68,11 @@ fn advance(point: Point, map: &[&[u8]], light: &mut [Bitset<u8>]) -> [Option<Poi
         return [None, None];
     }
 
-    let l = light
-        .get_mut(x as usize * map[0].len() + y as usize)
-        .unwrap();
-    if l.get(dir as u8) {
+    let light = &mut light[x as usize * map[0].len() + y as usize];
+    if light.get(dir as u8) {
         return [None, None];
     } else {
-        *l = l.set(dir as u8);
+        *light = light.set(dir as u8);
     }
 
     match (map[x as usize][y as usize], dir) {

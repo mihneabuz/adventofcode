@@ -1,30 +1,30 @@
-use std::cmp::Reverse;
+use std::{cmp::Reverse, collections::BinaryHeap};
 
 use itertools::Itertools;
+
 use lib::{aoc, challenge::Challenge};
-use priority_queue::PriorityQueue;
 
 pub struct Day17;
 
-// TODO: optimize this
 impl Challenge for Day17 {
     aoc!(year = 2023, day = 17);
 
     fn solve(input: String) -> (String, String) {
-        let map = input
+        let map: Box<[Vec<u8>]> = input
             .lines()
             .map(|line| line.as_bytes().iter().map(|b| b - b'0').collect_vec())
-            .collect_vec();
+            .collect();
 
-        fn solve<C>(map: &[Vec<u8>], crucible: C, max_streak: usize) -> u32
+        fn solve<C, I>(map: &[Vec<u8>], crucible: C, max_streak: usize) -> u32
         where
-            C: Fn(Dir, u8) -> [Option<Dir>; 3],
+            C: Fn(Dir, u8) -> I,
+            I: Iterator<Item = Dir>,
         {
             let n = map.len();
 
-            let mut queue = PriorityQueue::new();
+            let mut queue = BinaryHeap::new();
             let mut costs = vec![u32::MAX; n * n * max_streak * 4];
-            let heuristic = |x: i32, y: i32| ((n as i32 - 1) * 2 - x - y) as u32;
+            let heuristic = move |x: i32, y: i32| ((n as i32 - 1) * 2 - x - y) as u32;
 
             let start = Position {
                 pos: (0, 0),
@@ -32,16 +32,14 @@ impl Challenge for Day17 {
                 streak: 0,
             };
             start.set_cost(n, &mut costs, 0);
-            queue.push(start, Reverse(heuristic(0, 0)));
+            queue.push((Reverse(heuristic(0, 0)), start));
 
-            loop {
-                let (node, cost) = queue.pop().unwrap();
-
+            while let Some((cost, node)) = queue.pop() {
                 if node.pos == (n as i32 - 1, n as i32 - 1) {
-                    break cost.0;
+                    return cost.0;
                 }
 
-                for (x, y, dir) in neighbors(node, n, &crucible) {
+                for (x, y, dir) in neighbors(node.clone(), n, &crucible) {
                     let streak = if node.dir == dir { node.streak + 1 } else { 1 };
                     let cost = node.get_cost(n, &costs) + map[x as usize][y as usize] as u32;
 
@@ -53,10 +51,12 @@ impl Challenge for Day17 {
 
                     if cost < next.get_cost(n, &costs) {
                         next.set_cost(n, &mut costs, cost);
-                        queue.push(next, Reverse(cost + heuristic(x, y)));
+                        queue.push((Reverse(cost + heuristic(x, y)), next));
                     }
                 }
             }
+
+            unreachable!()
         }
 
         let fst = solve(&map, crucible, 3);
@@ -67,7 +67,7 @@ impl Challenge for Day17 {
 }
 
 #[repr(u8)]
-#[derive(Clone, Copy, Eq, PartialEq, Debug, Hash)]
+#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
 enum Dir {
     Up = 0,
     Down = 1,
@@ -75,7 +75,7 @@ enum Dir {
     Right = 3,
 }
 
-#[derive(Clone, Copy, Eq, PartialEq, Debug, Hash)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd)]
 struct Position {
     pos: (i32, i32),
     dir: Dir,
@@ -99,68 +99,67 @@ impl Position {
     }
 }
 
-fn neighbors<C>(curr: Position, size: usize, crucible: C) -> impl Iterator<Item = (i32, i32, Dir)>
+fn neighbors<C, I>(p: Position, size: usize, crucible: C) -> impl Iterator<Item = (i32, i32, Dir)>
 where
-    C: Fn(Dir, u8) -> [Option<Dir>; 3],
+    C: FnOnce(Dir, u8) -> I,
+    I: Iterator<Item = Dir>,
 {
-    crucible(curr.dir, curr.streak)
-        .into_iter()
-        .flatten()
-        .filter_map(move |dir| {
-            (match dir {
-                Dir::Up => {
-                    if curr.pos.0 <= 0 {
-                        None
-                    } else {
-                        Some((curr.pos.0 - 1, curr.pos.1))
-                    }
-                }
+    let Position { pos, dir, streak } = p;
 
-                Dir::Down => {
-                    if curr.pos.0 as usize >= size - 1 {
-                        None
-                    } else {
-                        Some((curr.pos.0 + 1, curr.pos.1))
-                    }
-                }
+    crucible(dir, streak).filter_map(move |dir| match dir {
+        Dir::Up => {
+            if pos.0 <= 0 {
+                None
+            } else {
+                Some((pos.0 - 1, pos.1, Dir::Up))
+            }
+        }
 
-                Dir::Left => {
-                    if curr.pos.1 <= 0 {
-                        None
-                    } else {
-                        Some((curr.pos.0, curr.pos.1 - 1))
-                    }
-                }
+        Dir::Down => {
+            if pos.0 as usize >= size - 1 {
+                None
+            } else {
+                Some((pos.0 + 1, pos.1, Dir::Down))
+            }
+        }
 
-                Dir::Right => {
-                    if curr.pos.1 as usize >= size - 1 {
-                        None
-                    } else {
-                        Some((curr.pos.0, curr.pos.1 + 1))
-                    }
-                }
-            })
-            .map(|(x, y)| (x, y, dir))
-        })
+        Dir::Left => {
+            if pos.1 <= 0 {
+                None
+            } else {
+                Some((pos.0, pos.1 - 1, Dir::Left))
+            }
+        }
+
+        Dir::Right => {
+            if pos.1 as usize >= size - 1 {
+                None
+            } else {
+                Some((pos.0, pos.1 + 1, Dir::Right))
+            }
+        }
+    })
 }
 
-fn crucible(dir: Dir, streak: u8) -> [Option<Dir>; 3] {
-    match (dir, streak) {
-        (Dir::Up, 0..=2) => [Some(Dir::Up), Some(Dir::Left), Some(Dir::Right)],
-        (Dir::Up, 3..) => [Some(Dir::Left), Some(Dir::Right), None],
+fn crucible(dir: Dir, streak: u8) -> impl Iterator<Item = Dir> {
+    (match (dir, streak) {
+        (Dir::Up, 0..=2) => [Dir::Up, Dir::Left, Dir::Right].as_ref(),
+        (Dir::Up, 3..) => [Dir::Left, Dir::Right].as_ref(),
 
-        (Dir::Down, 0..=2) => [Some(Dir::Down), Some(Dir::Left), Some(Dir::Right)],
-        (Dir::Down, 3..) => [Some(Dir::Left), Some(Dir::Right), None],
+        (Dir::Down, 0..=2) => [Dir::Down, Dir::Left, Dir::Right].as_ref(),
+        (Dir::Down, 3..) => [Dir::Left, Dir::Right].as_ref(),
 
-        (Dir::Left, 0..=2) => [Some(Dir::Left), Some(Dir::Up), Some(Dir::Down)],
-        (Dir::Left, 3..) => [Some(Dir::Up), Some(Dir::Down), None],
+        (Dir::Left, 0..=2) => [Dir::Left, Dir::Up, Dir::Down].as_ref(),
+        (Dir::Left, 3..) => [Dir::Up, Dir::Down].as_ref(),
 
-        (Dir::Right, 0..=2) => [Some(Dir::Right), Some(Dir::Up), Some(Dir::Down)],
-        (Dir::Right, 3..) => [Some(Dir::Up), Some(Dir::Down), None],
-    }
+        (Dir::Right, 0..=2) => [Dir::Right, Dir::Up, Dir::Down].as_ref(),
+        (Dir::Right, 3..) => [Dir::Up, Dir::Down].as_ref(),
+    })
+    .iter()
+    .copied()
 }
 
-fn mega_crucible(dir: Dir, streak: u8) -> [Option<Dir>; 3] {
+fn mega_crucible(dir: Dir, streak: u8) -> impl Iterator<Item = Dir> {
     let mut output = [None, None, None];
 
     let mut k = 0;
@@ -182,5 +181,5 @@ fn mega_crucible(dir: Dir, streak: u8) -> [Option<Dir>; 3] {
         }
     }
 
-    output
+    output.into_iter().flatten()
 }

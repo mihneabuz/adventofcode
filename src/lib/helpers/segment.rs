@@ -130,16 +130,23 @@ impl<T: Clone + PartialEq> SegmentSequence<T> {
             })
     }
 
-    pub fn insert<F>(&mut self, new: Segment<T>, f: F) -> bool
+    pub fn insert<F>(&mut self, new: Segment<T>, mut f: F) -> bool
     where
-        F: Fn(T, T) -> T + Copy,
+        F: FnMut(&Segment<T>, &Segment<T>) -> T,
+    {
+        self.insert_helper(new, &mut f)
+    }
+
+    fn insert_helper<F>(&mut self, new: Segment<T>, f: &mut F) -> bool
+    where
+        F: FnMut(&Segment<T>, &Segment<T>) -> T,
     {
         match self.binary_search(new.lo) {
             Err(idx) => {
                 if let Some(next) = self.inner.get_mut(idx) {
                     if new.hi > next.lo {
                         let (lower, upper) = new.split(next.lo).unwrap();
-                        return self.insert(lower, f) || self.insert(upper, f);
+                        return self.insert_helper(lower, f) || self.insert_helper(upper, f);
                     }
                 };
 
@@ -152,7 +159,7 @@ impl<T: Clone + PartialEq> SegmentSequence<T> {
                 if new.hi > seg.hi {
                     let (lower, upper) = new.split(seg.hi).unwrap();
                     self.merge(lower, idx, f);
-                    self.insert(upper, f);
+                    self.insert_helper(upper, f);
                 } else {
                     self.merge(new, idx, f);
                 }
@@ -162,9 +169,9 @@ impl<T: Clone + PartialEq> SegmentSequence<T> {
         }
     }
 
-    fn merge<F>(&mut self, inner: Segment<T>, idx: usize, f: F)
+    fn merge<F>(&mut self, inner: Segment<T>, idx: usize, f: &mut F)
     where
-        F: Fn(T, T) -> T + Copy,
+        F: FnMut(&Segment<T>, &Segment<T>) -> T,
     {
         let outer = &self.inner[idx];
 
@@ -181,7 +188,7 @@ impl<T: Clone + PartialEq> SegmentSequence<T> {
         replacements.push(Segment {
             lo: inner.lo,
             hi: inner.hi,
-            value: f(outer.value.clone(), inner.value.clone()),
+            value: f(outer, &inner),
         });
 
         if outer.hi > inner.hi {
@@ -313,9 +320,15 @@ mod tests {
         )
         .unwrap();
 
-        seq.insert(Segment::new(1, 5, 50).unwrap(), |old, new| old + new);
-        seq.insert(Segment::new(3, 5, 1).unwrap(), |old, new| old + new);
-        seq.insert(Segment::new(5, 8, 20).unwrap(), |old, new| old + new);
+        seq.insert(Segment::new(1, 5, 50).unwrap(), |new, old| {
+            old.value + new.value
+        });
+        seq.insert(Segment::new(3, 5, 1).unwrap(), |new, old| {
+            old.value + new.value
+        });
+        seq.insert(Segment::new(5, 8, 20).unwrap(), |new, old| {
+            old.value + new.value
+        });
 
         let segs = seq.segments().cloned().collect_vec();
         assert_eq!(

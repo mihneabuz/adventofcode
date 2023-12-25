@@ -2,14 +2,15 @@ use std::collections::HashMap;
 
 use rand::Rng;
 
-use lib::{aoc, challenge::Challenge};
+use lib::{aoc, challenge::ThreadedChallenge, executor::WorkerGroup, workers};
 
 pub struct Day25;
 
-impl Challenge for Day25 {
+impl ThreadedChallenge for Day25 {
     aoc!(year = 2023, day = 25);
 
-    fn solve(input: String) -> (String, String) {
+    workers!(8);
+    fn solve(input: String, workers: &mut WorkerGroup) -> (String, String) {
         let mut nodes_map = StrMapper::new();
 
         let mut nodes: HashMap<usize, usize> = HashMap::new();
@@ -27,33 +28,41 @@ impl Challenge for Day25 {
             }
         }
 
-        let mut rng = rand::thread_rng();
         let fst = loop {
-            let mut nodes = nodes.clone();
-            let mut edges = edges.clone();
+            let mut handles = Vec::new();
+            for worker in workers.iter_mut() {
+                let mut nodes = nodes.clone();
+                let mut edges = edges.clone();
 
-            while nodes.len() > 2 {
-                let i = rng.gen_range(0..edges.len());
-                let (n1, n2) = edges[i];
+                handles.push(worker.run(move || {
+                    let mut rng = rand::thread_rng();
 
-                edges.swap_remove(i);
-                *nodes.get_mut(&n1).unwrap() += nodes.remove(&n2).unwrap();
+                    while nodes.len() > 2 {
+                        let i = rng.gen_range(0..edges.len());
+                        let (n1, n2) = edges[i];
 
-                for edge in edges.iter_mut() {
-                    if edge.0 == n2 {
-                        edge.0 = n1;
+                        edges.swap_remove(i);
+                        *nodes.get_mut(&n1).unwrap() += nodes.remove(&n2).unwrap();
+
+                        for edge in edges.iter_mut() {
+                            if edge.0 == n2 {
+                                edge.0 = n1;
+                            }
+
+                            if edge.1 == n2 {
+                                edge.1 = n1;
+                            }
+                        }
+
+                        edges.retain(|edge| edge.0 != edge.1);
                     }
 
-                    if edge.1 == n2 {
-                        edge.1 = n1;
-                    }
-                }
-
-                edges.retain(|edge| edge.0 != edge.1);
+                    (edges.len() == 3).then_some(nodes.values().product::<usize>())
+                }));
             }
 
-            if edges.len() == 3 {
-                break nodes.values().product::<usize>();
+            if let Some(res) = handles.into_iter().find_map(|h| h.join().unwrap()) {
+                break res;
             }
         };
 

@@ -73,26 +73,25 @@ fn solve(iter: impl Iterator<Item = (char, isize)>) -> isize {
     .fold(
         (SegmentSequence::<bool>::new(), None, 0),
         |(mut sequence, last_offset, total), (offset, walls)| {
-            let mut width = sequence_width(&sequence);
+            let width = sequence_width(&sequence);
 
             let skipped = last_offset
                 .map(|last| width * (offset - 1 - last))
                 .unwrap_or(0);
 
-            // TODO: clean this up
             let mut current = width;
             for ((start, end), _) in walls {
-                let removed =
-                    sequence.insert(Segment::new(start, end, true).unwrap(), |_, _| false);
+                let mut removed = 0;
+                sequence.insert(Segment::new(start, end, true).unwrap(), |_, old| {
+                    removed = old.hi - old.lo;
+                    false
+                });
+
                 sequence = sequence.simplify();
 
-                let new_width = sequence_width(&sequence);
-
-                if removed {
-                    current += width - new_width;
+                if removed > 0 {
+                    current += removed;
                 }
-
-                width = new_width;
             }
 
             sequence.retain(|segment| segment.value);
@@ -100,7 +99,7 @@ fn solve(iter: impl Iterator<Item = (char, isize)>) -> isize {
             (sequence, Some(offset), total + skipped + current)
         },
     )
-    .2
+    .2 + 1
 }
 
 fn parse(line: &str) -> (char, isize, &str) {
