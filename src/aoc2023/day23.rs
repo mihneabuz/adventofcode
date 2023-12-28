@@ -9,7 +9,6 @@ pub struct Day23;
 
 type Graph = Vec<((usize, usize), Vec<(u32, usize)>)>;
 
-// TODO: optimize this
 impl Challenge for Day23 {
     aoc!(year = 2023, day = 23);
 
@@ -53,14 +52,14 @@ impl Challenge for Day23 {
                 dists[start.0 * m + start.1]
             };
 
-            2 + longest_path(start, end)
+            longest_path(start, end) + 2
         };
 
         let snd = {
             let graph = convert(map, start);
 
-            let start_idx = graph.iter().position(|node| node.0 == start).unwrap();
-            let end_idx = graph.iter().position(|node| node.0 == end).unwrap();
+            let start = graph.iter().position(|node| node.0 == start).unwrap();
+            let end = graph.iter().position(|node| node.0 == end).unwrap();
 
             fn dfs(idx: usize, end: usize, visited: Bitset<u64>, graph: &Graph) -> Option<u32> {
                 if idx == end {
@@ -68,18 +67,20 @@ impl Challenge for Day23 {
                 }
 
                 let mut best = None;
-                for (cost, neigh) in graph[idx].1.iter() {
-                    if !visited.get(*neigh) {
-                        if let Some(rest) = dfs(*neigh, end, visited.set(idx), graph) {
-                            best = Some(best.unwrap_or(0).max(cost + rest));
-                        }
+                for &(cost, neigh) in graph[idx].1.iter() {
+                    if visited.get(neigh) {
+                        continue;
+                    }
+
+                    if let Some(rest) = dfs(neigh, end, visited.set(idx), graph) {
+                        best = Some(best.unwrap_or(0).max(cost + rest));
                     }
                 }
 
                 best
             }
 
-            dfs(start_idx, end_idx, Bitset::new(), &graph).unwrap() + 1
+            dfs(start, end, Bitset::new(), &graph).unwrap() + 1
         };
 
         (fst.to_string(), snd.to_string())
