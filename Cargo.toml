@@ -16,9 +16,11 @@ path = "src/main.rs"
 [dependencies]
 automod = "1"
 clap = { version = "4.4", features = [ "derive" ] }
+cli-table = "0.4"
 closure = "0.3"
 config = "0.14"
 console = "0.15"
+hashbrown = "0.15"
 itertools = "0.13"
 lazy_static = "1"
 oneshot = "0.1"
@@ -28,7 +30,6 @@ reqwest = { version = "0.12", features = [ "blocking", "cookies" ]}
 ndarray = "0.15"
 ndarray-linalg = { version = "0.16", features = [ "openblas-system"] }
 num = "0.4"
-prettytable = "0.10"
 scopeguard = "1.2"
 smallvec = "1.11"
 tap = "1"
