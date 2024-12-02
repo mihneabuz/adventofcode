@@ -118,15 +118,15 @@ impl Challenge for Day24 {
             };
 
             let mut x = array![
-                (pos1.0 + pos2.0 + pos3.0) / 3.,
-                (pos1.1 + pos2.1 + pos3.1) / 3.,
-                (pos1.2 + pos2.2 + pos3.2) / 3.,
-                (vel1.0 + vel2.0 + vel3.0) / 3.,
-                (vel1.1 + vel2.1 + vel3.1) / 3.,
-                (vel1.2 + vel2.2 + vel3.2) / 3.,
-                (pos1.0 + pos2.0 + pos3.0) / 30.,
-                (pos1.1 + pos2.1 + pos3.1) / 30.,
-                (pos1.2 + pos2.2 + pos3.2) / 30.,
+                (pos1.0 + pos2.0 + pos3.0),
+                (pos1.1 + pos2.1 + pos3.1),
+                (pos1.2 + pos2.2 + pos3.2),
+                (vel1.0 + vel2.0 + vel3.0),
+                (vel1.1 + vel2.1 + vel3.1),
+                (vel1.2 + vel2.2 + vel3.2),
+                (pos1.0 + pos2.0 + pos3.0),
+                (pos1.1 + pos2.1 + pos3.1),
+                (pos1.2 + pos2.2 + pos3.2),
             ];
 
             let eps = 1e-5;

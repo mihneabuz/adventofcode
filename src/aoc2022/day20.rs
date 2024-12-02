@@ -27,7 +27,7 @@ fn next_index(i: i64, val: i64, n: i64) -> i64 {
     }
 }
 
-fn solve(values: &Vec<i64>, rounds: i32, key: i64) -> i64 {
+fn solve(values: &[i64], rounds: i32, key: i64) -> i64 {
     let n = values.len();
 
     let mut xs = values

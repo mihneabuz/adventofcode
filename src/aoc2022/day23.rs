@@ -110,7 +110,7 @@ fn east(pos: (usize, usize)) -> [(usize, usize); 3] {
 }
 
 fn calculate_moves(map: &Map, round: usize) -> Vec<Move> {
-    let (n, m) = (map.len(), map.get(0).unwrap_or(&vec![]).len());
+    let (n, m) = (map.len(), map.first().unwrap_or(&vec![]).len());
 
     let mut res = Vec::new();
     for i in 0..n {
