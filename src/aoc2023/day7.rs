@@ -99,7 +99,7 @@ fn hand_strength(cards: &SmallVec<[u8; 5]>, joker: u8) -> usize {
     let groups: SmallVec<[u8; 5]> = cards
         .iter()
         .sorted()
-        .group_by(|&c| c)
+        .chunk_by(|&c| c)
         .into_iter()
         .map(|g| g.1.count() as u8)
         .sorted()

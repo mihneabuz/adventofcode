@@ -14,7 +14,7 @@ impl Challenge for Day1 {
             .map(|line| line.trim().parse::<usize>().unwrap_or(0));
 
         let elfs = weights
-            .group_by(|&w| w > 0)
+            .chunk_by(|&w| w > 0)
             .into_iter()
             .map(|(_, elf)| elf.sum::<usize>())
             .collect::<Vec<_>>();

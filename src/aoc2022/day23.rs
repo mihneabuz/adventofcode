@@ -140,7 +140,7 @@ fn calculate_moves(map: &Map, round: usize) -> Vec<Move> {
 
 fn apply_moves(map: &mut Map, moves: &mut [Move]) {
     moves.sort_by_key(|m| m.to);
-    for (_, mut group) in &moves.iter().group_by(|m| m.to) {
+    for (_, mut group) in &moves.iter().chunk_by(|m| m.to) {
         let m = group.next().unwrap();
         if group.next().is_none() {
             map[m.from.0][m.from.1] = EMPTY;

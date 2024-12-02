@@ -68,7 +68,7 @@ fn solve(iter: impl Iterator<Item = (char, isize)>) -> isize {
     })
     .flatten()
     .sorted_by_key(|(_, offset)| *offset)
-    .group_by(|(_, offset)| *offset)
+    .chunk_by(|(_, offset)| *offset)
     .into_iter()
     .fold(
         (SegmentSequence::<bool>::new(), None, 0),
