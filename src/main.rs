@@ -81,7 +81,7 @@ fn main() -> std::io::Result<()> {
     println!();
 
     results.sort_by_key(|r| (r.year, r.day));
-    show_results(&results);
+    show_results(results);
 
     let footer = format!("Executed {} challanges in {:.2?}", count, time);
     println!("\n {}", style(footer).bold().green());
@@ -89,13 +89,8 @@ fn main() -> std::io::Result<()> {
     Ok(())
 }
 
-fn show_results(results: &[ChallengeResult]) {
-    use cli_table::{format::Justify, Cell, Color, Style, Table};
-
-    if let Some(result) = results.iter().find(|r| r.example.is_some()) {
-        let solution = result.example.as_ref().unwrap();
-        println!("Example: {} {}", solution.0, solution.1);
-    }
+fn show_results(results: Vec<ChallengeResult>) {
+    use cli_table::{format::Justify, print_stdout, Cell, Color, Style, Table};
 
     let longest = results
         .iter()
@@ -106,7 +101,7 @@ fn show_results(results: &[ChallengeResult]) {
         .ilog2();
 
     let mut table = Vec::new();
-    for result in results {
+    for result in results.into_iter() {
         let duration = result.duration.as_nanos().ilog2();
         let rel_duration =
             String::from("█").repeat((duration * 10 / longest.max(1)).max(1) as usize);
@@ -122,8 +117,8 @@ fn show_results(results: &[ChallengeResult]) {
                 .cell()
                 .foreground_color(Some(Color::Green))
                 .justify(Justify::Right),
-            result.solution.0.clone().cell(),
-            result.solution.1.clone().cell(),
+            result.solution.0.cell(),
+            result.solution.1.cell(),
             format!("{:.2?}", result.duration)
                 .cell()
                 .foreground_color(Some(Color::Yellow))
@@ -148,5 +143,5 @@ fn show_results(results: &[ChallengeResult]) {
         })
         .collect::<Vec<_>>();
 
-    cli_table::print_stdout(table.table().title(header)).unwrap();
+    print_stdout(table.table().title(header)).unwrap();
 }

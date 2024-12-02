@@ -80,22 +80,22 @@ pub struct ChallengeResult {
     pub year: usize,
     pub day: usize,
     pub solution: (String, String),
-    pub example: Option<(String, String)>,
     pub duration: Duration,
 }
 
 impl ChallengeObject {
     pub fn solve(self, workers: &mut WorkerGroup) -> ChallengeResult {
-        let example = self
-            .example
-            .map(|input| (self.solve)(input.to_string(), workers).0);
-        let (solution, duration) = (self.solve)(self.input, workers);
+        let input = match self.example {
+            Some(example) => example.to_string(),
+            None => self.input,
+        };
+
+        let (solution, duration) = (self.solve)(input, workers);
 
         ChallengeResult {
             year: self.year,
             day: self.day,
             solution,
-            example,
             duration,
         }
     }
