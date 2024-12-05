@@ -8,7 +8,7 @@ pub fn challenges() -> Vec<ChallengeObject> {
         day2::Day2::into_obj(),
         day3::Day3::into_obj(),
         day4::Day4::into_obj(),
-        // day5::Day5::into_obj(),
+        day5::Day5::into_obj(),
         // day6::Day6::into_obj(),
         // day7::Day7::into_obj(),
         // day8::Day8::into_obj(),
