@@ -15,6 +15,7 @@ path = "src/main.rs"
 
 [dependencies]
 automod = "1"
+bitflags = "2.6"
 clap = { version = "4.4", features = [ "derive" ] }
 cli-table = "0.4"
 closure = "0.3"
