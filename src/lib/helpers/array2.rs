@@ -12,6 +12,10 @@ pub fn from_str(s: &str) -> Array2<u8> {
         acc.push(b);
     }
 
+    if !s.ends_with('\n') {
+        m += 1;
+    }
+
     let n = (s.len() - m + 1) / m;
     Array::from_vec(acc).into_shape((n, m)).unwrap()
 }
