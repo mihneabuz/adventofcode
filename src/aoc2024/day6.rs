@@ -2,7 +2,6 @@ use lib::{helpers, prelude::*};
 
 use bitflags::bitflags;
 use itertools::{iterate, Itertools};
-use ndarray::Array2;
 
 pub struct Day6;
 
@@ -55,13 +54,9 @@ fn step(pos: Pos, dir: Dir) -> Pos {
     ((pos.0 + dir.di()), (pos.1 + dir.dj()))
 }
 
-fn valid(pos: Pos, bounds: (usize, usize)) -> bool {
-    pos.0 >= 0 && pos.0 < bounds.0 as i32 && pos.1 >= 0 && pos.1 < bounds.1 as i32
-}
-
-fn advance(pos: Pos, dir: Dir, map: &Array2<u8>) -> (Pos, Dir) {
+fn advance(pos: Pos, dir: Dir, map: &helpers::Map<u8>) -> (Pos, Dir) {
     let next = step(pos, dir);
-    if valid(next, map.dim()) && map[(next.0 as usize, next.1 as usize)] == b'#' {
+    if map.valid(next) && map[(next.0 as usize, next.1 as usize)] == b'#' {
         (pos, dir.turn_right())
     } else {
         (next, dir)
@@ -72,51 +67,51 @@ impl Challenge for Day6 {
     aoc!(year = 2024, day = 6);
 
     fn solve(input: String) -> (String, String) {
-        let mut map = helpers::array2::from_str(&input);
-        let (n, m) = map.dim();
+        let mut map = helpers::Map::from_text(&input);
+        let (n, m) = map.dims();
 
         let start = map
-            .indexed_iter()
+            .cells()
             .find_map(|((i, j), b)| (*b == b'^').then_some((i as i32, j as i32)))
             .unwrap();
 
         let path = iterate((start, Dir::UP), |&(pos, dir)| advance(pos, dir, &map))
-            .take_while(|(pos, _)| valid(*pos, (n, m)))
+            .take_while(|(pos, _)| map.valid(*pos))
             .collect_vec();
 
-        let mut cache = Array2::<u8>::zeros((n, m));
+        let mut cache = helpers::Map::<u8>::new(n, m);
         let (visited, loops) = path.into_iter().fold(
-            (Array2::<u8>::zeros((n, m)), 0),
+            (helpers::Map::<u8>::new(n, m), 0),
             |(mut visited, mut loops), (pos, dir)| {
-                visited[(pos.0 as usize, pos.1 as usize)] = 1;
+                visited[pos] = 1;
 
                 let block = step(pos, dir);
-                if !valid(block, map.dim()) {
+                if !map.valid(block) {
                     return (visited, loops);
                 }
 
-                let on_path = visited[(block.0 as usize, block.1 as usize)] == 1;
-                let is_free = map[(block.0 as usize, block.1 as usize)] == b'.';
+                let on_path = visited[block] == 1;
+                let is_free = map[block] == b'.';
 
                 if block != start && is_free && !on_path {
-                    map[(block.0 as usize, block.1 as usize)] = b'#';
+                    map[block] = b'#';
 
                     let looped = iterate((pos, dir.turn_right()), |&(pos, dir)| {
                         advance(pos, dir, &map)
                     })
-                    .take_while(|(pos, _)| valid(*pos, (n, m)))
+                    .take_while(|(pos, _)| map.valid(*pos))
                     .find(|&(pos, dir)| {
-                        if cache[(pos.0 as usize, pos.1 as usize)] & dir.bits() > 0 {
+                        if cache[pos] & dir.bits() > 0 {
                             return true;
                         }
 
-                        cache[(pos.0 as usize, pos.1 as usize)] |= dir.bits();
+                        cache[pos] |= dir.bits();
                         false
                     })
                     .map(|_| true)
                     .unwrap_or(false);
 
-                    map[(block.0 as usize, block.1 as usize)] = b'.';
+                    map[block] = b'.';
                     cache.fill(0);
 
                     loops += looped as i32;
@@ -128,8 +123,8 @@ impl Challenge for Day6 {
 
         (
             visited
-                .into_iter()
-                .map(|b| b as usize)
+                .cells()
+                .map(|(_, b)| *b as usize)
                 .sum::<usize>()
                 .to_string(),
             loops.to_string(),

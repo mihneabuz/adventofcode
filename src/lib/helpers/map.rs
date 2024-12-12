@@ -1,28 +1,70 @@
-use itertools::Itertools;
+use std::ops::{Index, IndexMut};
+
+use ndarray::{Array, Array2, Axis};
+use num::Num;
 
 #[derive(Clone)]
 pub struct Map<T> {
-    inner: Vec<Vec<T>>,
+    inner: Array2<T>,
 }
+
+type Dirs = &'static [(isize, isize)];
 
 impl<T> Map<T>
 where
-    T: Default + Clone,
+    T: Default + Clone + Num,
 {
     pub fn new(n: usize, m: usize) -> Self {
         Self {
-            inner: vec![vec![T::default(); m]; n],
+            inner: Array2::zeros((n, m)),
+        }
+    }
+}
+
+impl Map<u8> {
+    pub fn from_text(input: &str) -> Self {
+        let mut m = 0;
+        let mut acc = Vec::new();
+
+        for b in input.bytes() {
+            if b == b'\n' {
+                m += 1;
+                continue;
+            }
+            acc.push(b);
+        }
+
+        if !input.ends_with('\n') {
+            m += 1;
+        }
+
+        let n = (input.len() - m + 1) / m;
+
+        Self {
+            inner: Array::from_vec(acc).into_shape((n, m)).unwrap(),
         }
     }
 }
 
 impl<T> Map<T>
 where
-    T: Clone,
+    T: Copy,
 {
     pub fn from_slices(map: &[&[T]]) -> Self {
+        let (n, m) = (map.len(), map[0].len());
         Self {
-            inner: Vec::from_iter(map.iter().map(|s| s.to_vec())),
+            inner: Array::from_iter(map.iter().flat_map(|row| row.iter()).copied())
+                .into_shape((n, m))
+                .unwrap(),
+        }
+    }
+
+    pub fn from_vecs(map: Vec<Vec<T>>) -> Self {
+        let (n, m) = (map.len(), map[0].len());
+        Self {
+            inner: Array::from_iter(map.iter().flat_map(|row| row.iter()).copied())
+                .into_shape((n, m))
+                .unwrap(),
         }
     }
 }
@@ -40,72 +82,66 @@ impl<T> Map<T> {
         (1, 1),
     ];
 
-    pub fn from_vecs(map: Vec<Vec<T>>) -> Self {
-        Self { inner: map }
-    }
-
-    pub fn from_iterator<R, C>(iter: R) -> Self
-    where
-        R: Iterator<Item = C>,
-        C: Iterator<Item = T>,
-    {
-        Self {
-            inner: iter.map(|r| r.collect_vec()).collect_vec(),
-        }
+    pub fn dims(&self) -> (usize, usize) {
+        self.inner.dim()
     }
 
     pub fn height(&self) -> usize {
-        self.inner.len()
+        self.inner.dim().0
     }
 
     pub fn width(&self) -> usize {
-        self.inner[0].len()
+        self.inner.dim().1
     }
 
     pub fn get(&self, i: usize, j: usize) -> &T {
-        &self.inner[i][j]
+        &self.inner[(i, j)]
     }
 
     pub fn get_mut(&mut self, i: usize, j: usize) -> &mut T {
-        &mut self.inner[i][j]
+        &mut self.inner[(i, j)]
     }
 
     pub fn get_checked(&self, i: usize, j: usize) -> Option<&T> {
-        self.inner.get(i)?.get(j)
+        self.inner.get((i, j))
     }
 
     pub fn set(&mut self, i: usize, j: usize, value: T) {
-        self.inner[i][j] = value;
+        *self.get_mut(i, j) = value;
     }
 
     pub fn replace(&mut self, i: usize, j: usize, value: T) -> T {
-        std::mem::replace(&mut self.inner[i][j], value)
+        std::mem::replace(self.get_mut(i, j), value)
+    }
+
+    pub fn fill(&mut self, elem: T)
+    where
+        T: Clone,
+    {
+        self.inner.fill(elem);
     }
 
     pub fn row(&self, i: usize) -> &[T] {
-        &self.inner[i]
-    }
-
-    pub fn row_mut(&mut self, i: usize) -> &mut [T] {
-        &mut self.inner[i]
+        self.row_checked(i).unwrap()
     }
 
     pub fn row_checked(&self, i: usize) -> Option<&[T]> {
-        self.inner.get(i).map(|v| v.as_slice())
+        self.inner.row(i).to_slice()
     }
 
     pub fn rows(&self) -> impl Iterator<Item = (usize, &[T])> {
-        self.inner.iter().map(|r| r.as_slice()).enumerate()
+        self.inner
+            .axis_iter(Axis(0))
+            .map(|row| row.to_slice().unwrap())
+            .enumerate()
     }
 
-    pub fn positions(&self) -> impl Iterator<Item = (usize, usize)> {
-        let (n, m) = (self.height(), self.width());
-        (0..n).flat_map(move |i| (0..m).map(move |j| (i, j)))
+    pub fn positions(&self) -> impl Iterator<Item = (usize, usize)> + '_ {
+        self.inner.indexed_iter().map(|(pos, _)| pos)
     }
 
     pub fn cells(&self) -> impl Iterator<Item = ((usize, usize), &T)> {
-        let (n, m) = (self.height(), self.width());
-        (0..n).flat_map(move |i| (0..m).map(move |j| ((i, j), self.get(i, j))))
+        self.inner.indexed_iter()
     }
 
     pub fn neighs4(&self, i: usize, j: usize) -> Neighbours<T> {
@@ -132,6 +168,21 @@ impl<T> Map<T> {
         }
 
         if j < 0 || j >= self.width() as isize {
+            return false;
+        }
+
+        true
+    }
+
+    pub fn valid<I>(&self, pos: (I, I)) -> bool
+    where
+        I: num::Integer + num::Zero + num::NumCast,
+    {
+        if pos.0 < I::zero() || pos.0 >= I::from(self.height()).unwrap() {
+            return false;
+        }
+
+        if pos.1 < I::zero() || pos.1 >= I::from(self.width()).unwrap() {
             return false;
         }
 
@@ -169,7 +220,33 @@ impl<T> Map<T> {
     }
 }
 
-type Dirs = &'static [(isize, isize)];
+impl<T> Index<(i32, i32)> for Map<T> {
+    type Output = T;
+
+    fn index(&self, index: (i32, i32)) -> &Self::Output {
+        self.get(index.0.try_into().unwrap(), index.1.try_into().unwrap())
+    }
+}
+
+impl<T> IndexMut<(i32, i32)> for Map<T> {
+    fn index_mut(&mut self, index: (i32, i32)) -> &mut Self::Output {
+        self.get_mut(index.0.try_into().unwrap(), index.1.try_into().unwrap())
+    }
+}
+
+impl<T> Index<(usize, usize)> for Map<T> {
+    type Output = T;
+
+    fn index(&self, index: (usize, usize)) -> &Self::Output {
+        self.get(index.0, index.1)
+    }
+}
+
+impl<T> IndexMut<(usize, usize)> for Map<T> {
+    fn index_mut(&mut self, index: (usize, usize)) -> &mut Self::Output {
+        self.get_mut(index.0, index.1)
+    }
+}
 
 pub struct Neighbours<'a, T> {
     map: &'a Map<T>,

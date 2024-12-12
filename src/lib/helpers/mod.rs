@@ -1,4 +1,3 @@
-pub mod array2;
 mod bitset;
 mod map;
 mod segment;
