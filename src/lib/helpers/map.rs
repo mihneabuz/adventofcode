@@ -1,4 +1,7 @@
-use std::ops::{Index, IndexMut};
+use std::{
+    fmt::Debug,
+    ops::{Index, IndexMut},
+};
 
 use ndarray::{Array, Array2, Axis};
 use num::Num;
@@ -8,7 +11,7 @@ pub struct Map<T> {
     inner: Array2<T>,
 }
 
-type Dirs = &'static [(isize, isize)];
+type Dirs = &'static [(i32, i32)];
 
 impl<T> Map<T>
 where
@@ -70,8 +73,8 @@ where
 }
 
 impl<T> Map<T> {
-    const D4: Dirs = &[(1, 0), (0, 1), (-1, 0), (0, -1)];
-    const D8: Dirs = &[
+    pub const D4: Dirs = &[(1, 0), (0, 1), (-1, 0), (0, -1)];
+    pub const D8: Dirs = &[
         (-1, -1),
         (-1, 0),
         (-1, 1),
@@ -103,6 +106,15 @@ impl<T> Map<T> {
     }
 
     pub fn get_checked(&self, i: usize, j: usize) -> Option<&T> {
+        self.inner.get((i, j))
+    }
+
+    pub fn geti<I>(&self, pos: (I, I)) -> Option<&T>
+    where
+        I: num::NumCast,
+    {
+        let i = num::NumCast::from(pos.0)?;
+        let j = num::NumCast::from(pos.1)?;
         self.inner.get((i, j))
     }
 
@@ -142,6 +154,12 @@ impl<T> Map<T> {
 
     pub fn cells(&self) -> impl Iterator<Item = ((usize, usize), &T)> {
         self.inner.indexed_iter()
+    }
+
+    pub fn cellsi(&self) -> impl Iterator<Item = ((i32, i32), &T)> {
+        self.inner
+            .indexed_iter()
+            .map(|(pos, val)| ((pos.0 as i32, pos.1 as i32), val))
     }
 
     pub fn neighs4(&self, i: usize, j: usize) -> Neighbours<T> {
@@ -218,6 +236,23 @@ impl<T> Map<T> {
         self.cells()
             .find_map(|(pos, cell)| predicate(cell).then_some(pos))
     }
+
+    pub fn print(&self)
+    where
+        T: Debug,
+    {
+        for (_, row) in self.rows() {
+            println!("{:?}", row);
+        }
+    }
+}
+
+impl Map<u8> {
+    pub fn print_text(&self) {
+        for (_, row) in self.rows() {
+            println!("{}", String::from_utf8_lossy(row));
+        }
+    }
 }
 
 impl<T> Index<(i32, i32)> for Map<T> {
@@ -262,9 +297,9 @@ impl<T> Iterator for Neighbours<'_, T> {
         let (di, dj) = self.dirs.get(self.k)?;
         self.k += 1;
 
-        let (i, j) = (self.pos.0 as isize + di, self.pos.1 as isize + dj);
+        let (i, j) = (self.pos.0 as i32 + di, self.pos.1 as i32 + dj);
 
-        if !self.map.is_valid(i, j) {
+        if !self.map.valid((i, j)) {
             return self.next();
         }
 
