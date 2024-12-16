@@ -171,6 +171,15 @@ impl<T> Map<T> {
         }
     }
 
+    pub fn neighs4i(&self, pos: (i32, i32)) -> NeighboursI<T> {
+        NeighboursI {
+            map: self,
+            pos,
+            dirs: Self::D4,
+            k: 0,
+        }
+    }
+
     pub fn neighs8(&self, i: usize, j: usize) -> Neighbours<T> {
         Neighbours {
             map: self,
@@ -304,5 +313,29 @@ impl<T> Iterator for Neighbours<'_, T> {
         }
 
         Some((i as usize, j as usize))
+    }
+}
+
+pub struct NeighboursI<'a, T> {
+    map: &'a Map<T>,
+    pos: (i32, i32),
+    dirs: Dirs,
+    k: usize,
+}
+
+impl<T> Iterator for NeighboursI<'_, T> {
+    type Item = ((i32, i32), (i32, i32));
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let dir = self.dirs.get(self.k)?;
+        self.k += 1;
+
+        let next = (self.pos.0 + dir.0, self.pos.1 + dir.1);
+
+        if !self.map.valid(next) {
+            return self.next();
+        }
+
+        Some((*dir, next))
     }
 }
