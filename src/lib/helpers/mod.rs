@@ -16,3 +16,11 @@ where
 {
     s.parse::<T>().ok().unwrap()
 }
+
+pub fn join<I, T>(iter: I, sep: &str) -> String
+where
+    I: Iterator<Item = T>,
+    T: ToString,
+{
+    itertools::intersperse(iter.map(|item| item.to_string()), sep.to_string()).collect()
+}
