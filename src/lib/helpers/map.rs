@@ -246,6 +246,14 @@ impl<T> Map<T> {
             .find_map(|(pos, cell)| predicate(cell).then_some(pos))
     }
 
+    pub fn findi<F>(&self, predicate: F) -> Option<(i32, i32)>
+    where
+        F: Fn(&T) -> bool,
+    {
+        self.cellsi()
+            .find_map(|(pos, cell)| predicate(cell).then_some(pos))
+    }
+
     pub fn print(&self)
     where
         T: Debug,
@@ -316,6 +324,7 @@ impl<T> Iterator for Neighbours<'_, T> {
     }
 }
 
+#[derive(Clone)]
 pub struct NeighboursI<'a, T> {
     map: &'a Map<T>,
     pos: (i32, i32),
