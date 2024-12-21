@@ -70,8 +70,8 @@ impl Challenge for Day24 {
         // we can solve this with only 3 hailstones
 
         let snd = {
-            let ((pos1, vel1), (pos2, vel2), (pos3, vel3)) =
-                hailstones.into_iter().take(3).collect_tuple().unwrap();
+            let ((pos1, vel1), (pos2, vel2), (pos3, vel3), (pos4, vel4)) =
+                hailstones.into_iter().take(4).collect_tuple().unwrap();
 
             let f = move |x: &Array1<f64>| -> Array1<f64> {
                 array![
@@ -86,12 +86,16 @@ impl Challenge for Day24 {
                     pos3.0 + vel3.0 * x[8] - x[0] - x[3] * x[8],
                     pos3.1 + vel3.1 * x[8] - x[1] - x[4] * x[8],
                     pos3.2 + vel3.2 * x[8] - x[2] - x[5] * x[8],
+                    //
+                    pos4.0 + vel4.0 * x[9] - x[0] - x[3] * x[9],
+                    pos4.1 + vel4.1 * x[9] - x[1] - x[4] * x[9],
+                    pos4.2 + vel4.2 * x[9] - x[2] - x[5] * x[9],
                 ]
             };
 
             let iterate = move |x: Array1<f64>| -> Array1<f64> {
                 let row = |i: usize, j: usize, vel: f64| {
-                    let mut row = [0.; 9];
+                    let mut row = [0.; 12];
                     row[i] = -1.;
                     row[i + 3] = -x[j];
                     row[j] = vel - x[i + 3];
@@ -110,6 +114,10 @@ impl Challenge for Day24 {
                     row(0, 8, vel3.0),
                     row(1, 8, vel3.1),
                     row(2, 8, vel3.2),
+                    //
+                    row(0, 9, vel4.0),
+                    row(1, 9, vel4.1),
+                    row(2, 9, vel4.2),
                 ];
 
                 let fx = f(&x);
@@ -124,6 +132,9 @@ impl Challenge for Day24 {
                 (vel1.0 + vel2.0 + vel3.0),
                 (vel1.1 + vel2.1 + vel3.1),
                 (vel1.2 + vel2.2 + vel3.2),
+                (pos1.0 + pos2.0 + pos3.0),
+                (pos1.1 + pos2.1 + pos3.1),
+                (pos1.2 + pos2.2 + pos3.2),
                 (pos1.0 + pos2.0 + pos3.0),
                 (pos1.1 + pos2.1 + pos3.1),
                 (pos1.2 + pos2.2 + pos3.2),
