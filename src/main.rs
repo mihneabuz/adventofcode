@@ -1,6 +1,7 @@
 mod aoc2022;
 mod aoc2023;
 mod aoc2024;
+mod aoc2025;
 
 use std::time;
 
@@ -37,6 +38,7 @@ fn main() -> std::io::Result<()> {
         aoc2022::challenges(),
         aoc2023::challenges(),
         aoc2024::challenges(),
+        aoc2025::challenges(),
     ]
     .into_iter()
     .flatten()
