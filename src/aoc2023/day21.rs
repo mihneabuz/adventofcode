@@ -32,7 +32,7 @@ impl Challenge for Day21 {
 
         let fst = dists
             .cells()
-            .filter(|(_, &cell)| (1..=64).contains(&cell) && cell % 2 == 0)
+            .filter(|&(_, &cell)| (1..=64).contains(&cell) && cell % 2 == 0)
             .count();
 
         let steps = 26501365;

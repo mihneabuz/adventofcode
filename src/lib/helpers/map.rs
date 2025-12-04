@@ -162,7 +162,7 @@ impl<T> Map<T> {
             .map(|(pos, val)| ((pos.0 as i32, pos.1 as i32), val))
     }
 
-    pub fn neighs4(&self, i: usize, j: usize) -> Neighbours<T> {
+    pub fn neighs4(&self, i: usize, j: usize) -> Neighbours<'_, T> {
         Neighbours {
             map: self,
             pos: (i, j),
@@ -171,7 +171,7 @@ impl<T> Map<T> {
         }
     }
 
-    pub fn neighs4i(&self, pos: (i32, i32)) -> NeighboursI<T> {
+    pub fn neighs4i(&self, pos: (i32, i32)) -> NeighboursI<'_, T> {
         NeighboursI {
             map: self,
             pos,
@@ -180,7 +180,7 @@ impl<T> Map<T> {
         }
     }
 
-    pub fn neighs8(&self, i: usize, j: usize) -> Neighbours<T> {
+    pub fn neighs8(&self, i: usize, j: usize) -> Neighbours<'_, T> {
         Neighbours {
             map: self,
             pos: (i, j),

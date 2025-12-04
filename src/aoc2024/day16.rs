@@ -2,7 +2,7 @@ use std::{cmp::Reverse, collections::BinaryHeap};
 
 use lib::{helpers, prelude::*};
 
-use hashbrown::{hash_map::Entry, HashMap};
+use hashbrown::{HashMap, hash_map::Entry};
 
 type Pos = (i32, i32);
 type Node = (Pos, Pos);
@@ -69,7 +69,7 @@ impl Challenge for Day16 {
         let end = find(b'E').unwrap();
 
         let res1 = solve(start, end, &mut map);
-        let res2 = map.cells().filter(|(_, &b)| b == b'O').count();
+        let res2 = map.cells().filter(|&(_, &b)| b == b'O').count();
 
         (res1.to_string(), res2.to_string())
     }

@@ -90,7 +90,7 @@ fn main() -> std::io::Result<()> {
 }
 
 fn show_results(results: Vec<ChallengeResult>) {
-    use cli_table::{format::Justify, print_stdout, Cell, Color, Style, Table};
+    use cli_table::{Cell, Color, Style, Table, format::Justify, print_stdout};
 
     let longest = results
         .iter()

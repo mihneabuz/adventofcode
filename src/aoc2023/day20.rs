@@ -129,7 +129,7 @@ fn step<'a>(signals: Vec<Signal<'a>>, mods: &mut HashMap<&'a str, Module<'a>>) -
     })
 }
 
-fn parse(input: &str) -> HashMap<&str, Module> {
+fn parse(input: &str) -> HashMap<&str, Module<'_>> {
     let mut mods = HashMap::new();
 
     for line in input.lines() {

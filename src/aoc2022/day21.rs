@@ -44,7 +44,7 @@ impl Challenge for Day21 {
     }
 }
 
-fn parse_yell(s: &str) -> Yell {
+fn parse_yell(s: &str) -> Yell<'_> {
     if let Ok(x) = s.parse() {
         Yell::Number(x)
     } else {
@@ -53,7 +53,7 @@ fn parse_yell(s: &str) -> Yell {
     }
 }
 
-fn parse_monkey(s: &str) -> (&str, Yell) {
+fn parse_monkey(s: &str) -> (&str, Yell<'_>) {
     let (monkey, yell) = s.split_once(": ").unwrap();
     (monkey, parse_yell(yell))
 }

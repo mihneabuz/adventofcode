@@ -59,7 +59,7 @@ enum Op<'a> {
     Remove { label: &'a str },
 }
 
-fn parse(seq: &str) -> Op {
+fn parse(seq: &str) -> Op<'_> {
     if *seq.as_bytes().last().unwrap() == b'-' {
         return Op::Remove {
             label: seq.trim_end_matches('-'),

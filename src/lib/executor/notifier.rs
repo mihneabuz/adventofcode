@@ -8,18 +8,18 @@ impl Notifier {
     }
 
     pub fn wait(&self) {
-        let mut joinable = self.0 .0.lock().unwrap();
+        let mut joinable = self.0.0.lock().unwrap();
         while !*joinable {
-            joinable = self.0 .1.wait(joinable).unwrap();
+            joinable = self.0.1.wait(joinable).unwrap();
         }
 
         *joinable = false;
     }
 
     pub fn signal(&self) {
-        let mut joinable = self.0 .0.lock().unwrap();
+        let mut joinable = self.0.0.lock().unwrap();
         *joinable = true;
-        self.0 .1.notify_one();
+        self.0.1.notify_one();
     }
 }
 

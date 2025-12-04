@@ -81,7 +81,7 @@ impl Challenge for Day19 {
             total + accepted(ranges, rule.fallback, rules)
         }
 
-        let snd = accepted(array::from_fn(|_| (1..4001)), "in", &rules);
+        let snd = accepted(array::from_fn(|_| 1..4001), "in", &rules);
 
         (fst.to_string(), snd.to_string())
     }
@@ -123,7 +123,7 @@ struct Rule<'a> {
     fallback: &'a str,
 }
 
-fn parse_rule(input: &str) -> (&str, Rule) {
+fn parse_rule(input: &str) -> (&str, Rule<'_>) {
     let (name, rest) = input.trim_end_matches('}').split_once('{').unwrap();
 
     let mut checks = Vec::new();
